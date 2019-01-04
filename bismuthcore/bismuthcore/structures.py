@@ -125,8 +125,9 @@ class Transaction:
         Create from json object.
         Call as tx = Transaction.from_json(json_string)
 
-        json can either contain public_key and sign as legacy str (b64 encoded hex) or as bytes.
+        json can either contain public_key as double encoded b64 or not.
         In either case, amount will be as string, 0.8f
+        block_hash, sender and recipient are to be hex encoded, for readability reasons, and because json does not support byte streams.
 
         This method tries to be as forgiveable as possible at import. However it *can't* import with amounts as int.
         """
@@ -146,22 +147,23 @@ class Transaction:
             int_fee = Transaction.f8_to_int(payload['fee'])
             int_reward = Transaction.f8_to_int(payload['reward'])
 
-        if isinstance(payload['sender'], str):
-            # addresses are hex encoded, convert to bin inplace
-            payload['sender'] = bytes.fromhex(payload['sender'])
-            payload['recipient'] = bytes.fromhex(payload['recipient'])
-        if isinstance(payload['public_key'], str):
+        # addresses are hex encoded, convert to bin inplace
+        payload['sender'] = bytes.fromhex(payload['sender'])
+        payload['recipient'] = bytes.fromhex(payload['recipient'])
+
+        bin_signature = b64decode(payload['signature'])
+        bin_block_hash = bytes.fromhex(payload['block_hash'])
+
+        if payload['public_key'].beginsWith('-----BEGIN PUBLIC KEY-----'):
+            return cls(payload['block_height'], payload['timestamp'], payload['sender'], payload['recipient'],
+                       int_amount, bin_signature, payload['public_key'], bin_block_hash,
+                       int_fee, int_reward, payload['operation'], payload['openfield'])
+        else:
             # We got legacy encoded strings, convert to bin
             bin_public_key = b64decode(payload['public_key'])
-            bin_signature = b64decode(payload['signature'])
-            bin_block_hash = bytes.fromhex(payload['block_hash'])
             return cls(payload['block_height'], payload['timestamp'], payload['sender'], payload['recipient'],
                        int_amount, bin_signature, bin_public_key, bin_block_hash, int_fee, int_reward,
                        payload['operation'], payload['openfield'])
-        else:
-            return cls(payload['block_height'], payload['timestamp'], payload['sender'], payload['recipient'],
-                       int_amount, payload['signature'], payload['public_key'], payload['block_hash'],
-                       int_fee, int_reward, payload['operation'], payload['openfield'])
 
     """
     Exporters
@@ -180,8 +182,8 @@ class Transaction:
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
         if legacy:
-            public_key = b64encode(self.public_key)
-            signature = b64encode(self.signature)
+            public_key = b64encode(self.public_key).decode('utf-8')
+            signature = b64encode(self.signature).decode('utf-8')
             block_hash = self.block_hash.hex()
             sender = self.sender.hex()
             recipient = self.recipient.hex()

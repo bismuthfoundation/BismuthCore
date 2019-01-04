@@ -24,7 +24,7 @@ Transaction
 """
 
 
-class Transaction():
+class Transaction:
     """A generic Bismuth Transaction"""
 
     # Inner storage is compact, binary form
@@ -112,8 +112,8 @@ class Transaction():
         Create from a protobuf buffer.
         Call as tx = Transaction.from_protobuf(buffer)
         """
-        # TODO
         raise AssertionError("TODO")
+        # TODO
         return cls()
 
     @classmethod
@@ -194,7 +194,7 @@ class Transaction():
         """
         The transaction object as a json string
         """
-        return json.dumps(self.as_dict(legacy))
+        return json.dumps(self.to_dict(legacy))
 
     def to_tuple(self):
         """
@@ -235,7 +235,7 @@ Block
 """
 
 
-class Block():
+class Block:
     """A generic Bismuth Block with its transactions"""
 
     # Inner storage is compact, binary form

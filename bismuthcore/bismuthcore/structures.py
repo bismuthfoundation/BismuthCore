@@ -207,7 +207,7 @@ class Transaction:
         'block_height', 'timestamp', 'sender', 'recipient', 'amount', 'signature', 'public_key', 'block_hash',
         'fee', 'reward', 'operation', 'openfield'
 
-        Legacy format means amounts will be string, 0.8f, and all bin content hex or hex+b64 encoded.
+        Legacy format means amounts will be string, 0.8f, and all bin content hex or b64 encoded.
         """
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
@@ -219,6 +219,17 @@ class Transaction:
         recipient = self.recipient.hex()
         return (self.block_height, self.timestamp, sender, recipient, amount, signature, public_key, block_hash,
                 fee, reward, self.operation, self.openfield)
+
+    def to_bin_tuple(self):
+        """
+        The transaction object as a bin tuple in the following order:
+        'block_height', 'timestamp', 'sender', 'recipient', 'amount', 'signature', 'public_key', 'block_hash',
+        'fee', 'reward', 'operation', 'openfield'
+
+        Bin format means amounts will be integers, and all content unencoded.
+        """
+        return (self.block_height, self.timestamp, self.sender, self.recipient, self.amount, self.signature,
+                self.public_key, self.block_hash, self.fee, self.reward, self.operation, self.openfield)
 
     def to_protobuf(self, buffer=None):
         """Exports to protobuf

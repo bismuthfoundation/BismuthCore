@@ -6,6 +6,8 @@ Test temp util
 
 import sqlite3
 import sys
+from os import remove
+
 sys.path.append('../bismuthcore')
 from structures import Transaction
 
@@ -41,6 +43,7 @@ SQL_CREATE = ('''
               'CREATE INDEX `Operation Index` ON `transactions` (`operation`)',
 )
 
+
 SQL_CREATE_LEGACY = ('''
                      CREATE TABLE "misc" (
                          `block_height`	INTEGER,
@@ -71,15 +74,44 @@ SQL_CREATE_LEGACY = ('''
                      'CREATE INDEX `Amount Index` ON `transactions` (`amount`)',
                      'CREATE INDEX `Address Index` ON `transactions` (`address`)',
                      'CREATE INDEX `Operation Index` ON `transactions` (`operation`)',
-)
+                     )
+
+
+
+def create(db, sql: tuple):
+    for line in sql:
+        db.execute(line)
+    db.commit()
 
 
 if __name__ == "__main__":
+
+    try:
+        remove('ledger_new.db')
+    except:
+        pass
+    try:
+        remove('ledger_legacy.db')
+    except:
+        pass
+    test_new = sqlite3.connect('ledger_new.db', timeout=1)
+    create(test_new, SQL_CREATE)
+    test_legacy = sqlite3.connect('ledger_legacy.db', timeout=1)
+    create(test_legacy, SQL_CREATE_LEGACY)
+
     with sqlite3.connect('../../../Bismuth-temp/static/ledger.db', timeout=1) as ledger:
         ledger.text_factory = str
-        res = ledger.execute("select * from transactions where block_height > 800000 limit 100")
+        res = ledger.execute("select * from transactions where block_height > 700000 limit 100000")
         for row in res:
-            print(len(str(row)))  # About 2000
+            # print(len(str(row)))  # About 2000
             tx = Transaction.from_legacy(row)
-            print(tx.to_json(legacy=True))
+            # print(tx.to_bin_tuple())
+            test_legacy.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", row)
+            tx.public_key = b''
+            test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_bin_tuple())
+    test_new.commit()
+    test_new.close()  # 294 117 376
+    test_legacy.commit()
+    test_legacy.close()  # 369 516 544
+
 

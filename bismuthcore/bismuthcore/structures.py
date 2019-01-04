@@ -73,9 +73,12 @@ class Transaction:
         int_amount = Transaction.f8_to_int(amount)
         int_fee = Transaction.f8_to_int(fee)
         int_reward = Transaction.f8_to_int(reward)
-        # public_key and signature are hex encoded then b64 encoded in legacy format.
-        bin_public_key = bytes.fromhex(b64decode(public_key))
-        bin_signature = bytes.fromhex(b64decode(signature))
+        # public_key is double b64 encoded in legacy format.
+        # Could win even more storing the public_key decoded once more, but may generate more overhead at decode
+        # Postponed, since pubkeys do not need to be stored for every address every time
+        bin_public_key = b64decode(public_key)
+        # signature is b64 encoded in legacy format.
+        bin_signature = b64decode(signature)
         # whereas block hash only is hex encoded.
         bin_block_hash = bytes.fromhex(block_hash)
         # As well as sender and recipient
@@ -98,8 +101,8 @@ class Transaction:
         int_amount = Transaction.f8_to_int(amount)
         int_fee = Transaction.f8_to_int(fee)
         int_reward = Transaction.f8_to_int(reward)
-        bin_public_key = bytes.fromhex(b64decode(public_key))
-        bin_signature = bytes.fromhex(b64decode(signature))
+        bin_public_key = b64decode(public_key)
+        bin_signature = b64decode(signature)
         bin_block_hash = bytes.fromhex(block_hash)
         bin_sender = bytes.fromhex(sender)
         bin_recipient = bytes.fromhex(recipient)
@@ -149,8 +152,8 @@ class Transaction:
             payload['recipient'] = bytes.fromhex(payload['recipient'])
         if isinstance(payload['public_key'], str):
             # We got legacy encoded strings, convert to bin
-            bin_public_key = bytes.fromhex(b64decode(payload['public_key']))
-            bin_signature = bytes.fromhex(b64decode(payload['signature']))
+            bin_public_key = b64decode(payload['public_key'])
+            bin_signature = b64decode(payload['signature'])
             bin_block_hash = bytes.fromhex(payload['block_hash'])
             return cls(payload['block_height'], payload['timestamp'], payload['sender'], payload['recipient'],
                        int_amount, bin_signature, bin_public_key, bin_block_hash, int_fee, int_reward,
@@ -177,8 +180,8 @@ class Transaction:
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
         if legacy:
-            public_key = b64encode(self.public_key.hex())
-            signature = b64encode(self.signature.hex())
+            public_key = b64encode(self.public_key)
+            signature = b64encode(self.signature)
             block_hash = self.block_hash.hex()
             sender = self.sender.hex()
             recipient = self.recipient.hex()
@@ -207,8 +210,8 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
-        public_key = b64encode(self.public_key.hex())
-        signature = b64encode(self.signature.hex())
+        public_key = b64encode(self.public_key)
+        signature = b64encode(self.signature)
         block_hash = self.block_hash.hex()
         sender = self.sender.hex()
         recipient = self.recipient.hex()

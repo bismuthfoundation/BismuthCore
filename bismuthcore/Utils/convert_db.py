@@ -102,16 +102,14 @@ if __name__ == "__main__":
         ledger.text_factory = str
         res = ledger.execute("select * from transactions where block_height > 700000 limit 100000")
         for row in res:
-            # print(len(str(row)))  # About 2000
             tx = Transaction.from_legacy(row)
-            # print(tx.to_bin_tuple())
             test_legacy.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", row)
             tx.public_key = b''
             test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_bin_tuple())
     test_new.commit()
-    test_new.close()  # 294 117 376
+    test_new.close()
     test_legacy.commit()
-    test_legacy.close()  # 369 516 544
+    test_legacy.close()
 
 
 """
@@ -125,5 +123,4 @@ Indexes
 - new (no pubkey)   243277824
 - new (dup pubkeys) 294117376
 """
-
 

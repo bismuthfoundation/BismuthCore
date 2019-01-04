@@ -50,3 +50,9 @@ All code atm is only copied over from node or bismuthclient repo.
 Nothing is in working state nor coherent.
 
 Worked on files will be added there in due time.
+
+- structures.py  
+  First draft of the core objects. Transaction class. Compact storage as native properties, and seamless read from/to any needed format.
+  
+- Utils/convert_db.py  
+  First tests of db conversion to assess gain of storage space as well as alternatives storage format. 

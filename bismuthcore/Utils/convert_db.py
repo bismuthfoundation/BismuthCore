@@ -77,7 +77,6 @@ SQL_CREATE_LEGACY = ('''
                      )
 
 
-
 def create(db, sql: tuple):
     for line in sql:
         db.execute(line)
@@ -113,5 +112,18 @@ if __name__ == "__main__":
     test_new.close()  # 294 117 376
     test_legacy.commit()
     test_legacy.close()  # 369 516 544
+
+
+"""
+No indexes
+- legacy            218091520
+- new (no pubkey)   102821888
+- new (dup pubkeys) 153661440
+
+Indexes
+- legacy            369516544
+- new (no pubkey)   243277824
+- new (dup pubkeys) 294117376
+"""
 
 

@@ -56,5 +56,9 @@ Worked on files will be added there in due time.
 - structures.py  
   First draft of the core objects. Transaction class. Compact storage as native properties, and seamless read from/to any needed format.
   
+- bismuthconfig.py  
+  BismuthConfig class, settings loading and default values.  
+  Reorganized key names.
+  
 - Utils/convert_db.py  
   First tests of db conversion to assess gain of storage space as well as alternatives storage format. 

@@ -5,8 +5,9 @@ Bismuth core structures
 import json
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from base64 import b64decode, b64encode
+from Cryptodome.Hash import SHA
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -243,7 +244,25 @@ class Transaction:
 
     @property
     def is_mining(self):
+        """Is this a coinbase transaction ?"""
         return self.reward > 0 and not self.amount
+
+    @property
+    def checksum(self):
+        """A hash of all the inner properties, used for test purposes atm"""
+        check = SHA.new(bytes(self.block_height))
+        check.update(str(self.timestamp).encode('utf-8'))
+        check.update(self.sender)
+        check.update(self.recipient)
+        check.update(bytes(self.amount))
+        check.update(self.signature)
+        check.update(self.public_key)
+        check.update(self.block_hash)
+        check.update(bytes(self.fee))
+        check.update(bytes(self.reward))
+        check.update(self.operation.encode('utf-8'))
+        check.update(self.openfield.encode('utf-8'))
+        return check.digest()
 
 
 """

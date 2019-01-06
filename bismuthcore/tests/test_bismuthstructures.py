@@ -40,6 +40,12 @@ def test_convert_amount():
         assert f8_amount == Transaction.int_to_f8(int_amount)
 
 
+def test_checksum(verbose=False):
+    if verbose:
+        print(TX.checksum)
+    assert TX.checksum == b'}\x143\x11l\xa6\xa2\xc0r\x03\x8b\xdf\xf2$\xba\xe9\xb6\xe1\xc3I'
+
+
 def test_to_tuple(verbose=False):
     """Legacy export format"""
     if verbose:
@@ -82,6 +88,9 @@ def test_to_dict_bin(verbose=False):
 
 
 if __name__ == "__main__":
+    """
     test_to_tuple(verbose=True)
     test_to_json(verbose=True)
     test_to_dict_bin(verbose=True)
+    """
+    test_checksum(verbose=True)

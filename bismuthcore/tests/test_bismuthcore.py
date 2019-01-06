@@ -4,10 +4,12 @@
 """Tests for `bismuthcore` package."""
 
 import pytest
+import sys
 
+sys.path.append('../bismuthcore')
+from bismuthcore import BismuthNode
 
-from bismuthcore import bismuthcore
-
+# TODO
 
 @pytest.fixture
 def response():

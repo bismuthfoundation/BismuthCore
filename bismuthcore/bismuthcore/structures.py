@@ -13,7 +13,7 @@ DECIMAL_1E8 = Decimal(100000000)
 
 # Keys of the Json object
 TRANSACTION_KEYS = ('block_height', 'timestamp', 'sender', 'recipient', 'amount', 'signature', 'public_key',
-                    'block_hash', 'fee', 'reward', 'operation', 'openfield'
+                    'block_hash', 'fee', 'reward', 'operation', 'openfield',
                     'format')
 
 getcontext().rounding = ROUND_HALF_EVEN
@@ -195,11 +195,11 @@ class Transaction:
                                            self.signature, self.public_key, self.block_hash, fee, reward,
                                            self.operation, self.openfield, 'Bin')))
 
-    def to_json(self, legacy=False):
+    def to_json(self):
         """
         The transaction object as a json string
         """
-        return json.dumps(self.to_dict(legacy))
+        return json.dumps(self.to_dict(True))
 
     def to_tuple(self):
         """
@@ -212,8 +212,8 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
-        public_key = b64encode(self.public_key)
-        signature = b64encode(self.signature)
+        public_key = b64encode(self.public_key).decode('utf-8')
+        signature = b64encode(self.signature).decode('utf-8')
         block_hash = self.block_hash.hex()
         sender = self.sender.hex()
         recipient = self.recipient.hex()

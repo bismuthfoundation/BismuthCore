@@ -3,14 +3,10 @@
 """Main module."""
 
 
-"""
-A all in one Bismuth node
-"""
-
 import logging
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 class BismuthNode():
@@ -29,8 +25,14 @@ class BismuthNode():
         else:
             self.app_log = logging
 
+        self.check()
+
     def check(self):
         """Initial check of all config, data and db"""
+        if self.verbose:
+            self.app_log.info("Node: Initial Check...")
 
     def run(self):
         """Begins to listen to the net"""
+        if self.verbose:
+            self.app_log.info("Node: Run")

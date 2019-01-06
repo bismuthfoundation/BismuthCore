@@ -13,7 +13,7 @@ __version__ = '0.0.1'
 
 class BismuthConfig:
 
-    # "param_name":["type"] or "param_name"=["type", default_value]
+    # "param_name": ["type", default_value]
     _vars={
         # Node items
         "node_port": ["str", '5658'],
@@ -45,7 +45,7 @@ class BismuthConfig:
         "peers_ban_reset": ["int", 5],
         # mempool items
         "mempool_allowed": ["list", ['edf2d63cdf0b6275ead22c9e6d66aa8ea31dc0ccb367fad2e7c08a25', '4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed']],
-        "mempool_ram_conf": ["bool"],
+        "mempool_ram_conf": ["bool", True],
     }
 
     def __init__(self, app_log=None, verbose: bool=False):
@@ -64,7 +64,7 @@ class BismuthConfig:
         # Load from default config so we have all needed params with default values
         for key, default in self._vars.items():
             if key not in self.__dict__:
-                setattr(self, key, default)
+                setattr(self, key, default[1])
             else:
                 self.app_log.warning(f"Config: Trying to redefine protected key '{key}'.")
 

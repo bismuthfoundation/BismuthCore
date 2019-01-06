@@ -3,6 +3,7 @@ A Node test script to be used for dev
 """
 
 import sys
+import argparse
 import logging
 import tornado.log
 from os import path
@@ -19,6 +20,10 @@ __version__ = '0.0.1'
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Bismuth Dev Node')
+    parser.add_argument("-v", "--verbose", action="count", default=False, help='Force to be verbose.')
+    parser.add_argument("-l", "--level", type=str, default='WARNING', help='Force Log level: DEBUG, INFO, WARNING, ERROR')
+    args = parser.parse_args()
     app_log = logging.getLogger("tornado.application")
     tornado.log.enable_pretty_logging()
     # TODO: user dir
@@ -29,9 +34,11 @@ if __name__ == "__main__":
     rotate_handler.setFormatter(formatter)
     app_log.addHandler(rotate_handler)
 
-    config = BismuthConfig(app_log=app_log, verbose=True)
+    config = BismuthConfig(app_log=app_log, verbose=args.verbose)
+    if args.level:
+        config.log_level = args.level
     logging.basicConfig(level=config.get('log_level'))
+    app_log.setLevel(config.get('log_level'))
 
     node = BismuthNode(app_log=app_log, verbose=True, config=config)
-
     node.run()

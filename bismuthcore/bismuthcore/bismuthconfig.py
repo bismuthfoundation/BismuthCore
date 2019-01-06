@@ -8,7 +8,7 @@ from os import path
 from sys import exc_info
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 class BismuthConfig:
@@ -86,6 +86,7 @@ class BismuthConfig:
                 fname = path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 self.app_log.debug(f"Config: Type '{exc_type}' fname '{fname}' line {exc_tb.tb_lineno}.")
             return
+        return self.__dict__.get(key, None)
 
     def _load_file(self, filename: str):
         """Load provided config file and append to current config"""

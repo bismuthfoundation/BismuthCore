@@ -40,5 +40,5 @@ if __name__ == "__main__":
     logging.basicConfig(level=config.get('log_level'))
     app_log.setLevel(config.get('log_level'))
 
-    node = BismuthNode(app_log=app_log, verbose=True, config=config)
+    node = BismuthNode(app_log=app_log, verbose=True, config=config, com_backend_class_name='TornadoBackend')
     node.run()

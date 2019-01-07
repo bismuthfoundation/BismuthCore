@@ -3,7 +3,7 @@ Helper Class and functions
 """
 
 import logging
-
+from abc import ABC, abstractmethod
 
 __version__ = '0.0.2'
 
@@ -25,6 +25,21 @@ class BismuthBase:
 
     def __init__(self, app_log=None, config=None, verbose: bool=False):
         """Init and set defaults with fallback"""
+        self.app_log = base_app_log(app_log)
         self.verbose = verbose
         self.config = config
-        self.app_log = base_app_log(app_log)
+
+
+class Commands(ABC):
+
+    commands = None
+
+    def __init__(self, node):
+        self.node = node
+        self.app_log = node.app_log
+        self.verbose = node.verbose
+        self.config = node.config
+
+    @abstractmethod
+    def process_legacy(self, command):
+        pass

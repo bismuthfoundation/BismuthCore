@@ -33,7 +33,30 @@ class TornadoBackend(ComBackend):
     def serve(self):
         """Begins to listen to the net"""
         self.app_log.info("Tornado: Serve")
-        # TODO
+        loop = asyncio.get_event_loop()
+        if self.config.log_debug:
+            loop.set_debug(True)
+        try:
+            server = TornadoComServer()
+            server.verbose = self.verbose
+            server.backend = self
+            # server.listen(port)
+            server.bind(self.port, backlog=128, address=self.address, reuse_port=REUSE_PORT)
+            server.start(1)  # Forks multiple sub-processes
+            self.app_log.info(f"Starting server on tcp://{self.address}:{self.port}, reuse_port={REUSE_PORT}")
+            io_loop = IOLoop.instance()
+            # io_loop.spawn_callback(self.node.manager)
+            # self.node.connect()
+            try:
+                io_loop.start()
+            except KeyboardInterrupt:
+                self.node.stop_event.set()
+                loop = asyncio.get_event_loop()
+                # loop.run_until_complete(self.mempool.async_close())
+                io_loop.stop()
+                self.app_log.info("TornadoBackend: exited cleanly")
+        except Exception as e:
+            self.app_log.error(f"TornadoBackend Serve error: {e}")
 
     def stop(self):
         pass
@@ -58,3 +81,24 @@ class TornadoComClient(ComClient):
         if port:
             self.port = port
         self.app_log.info(f"TornadoComClient: connect to '{self.host}:{self.port}'.")
+
+
+class TornadoComServer(TCPServer):
+    """Tornado asynchronous TCP server."""
+
+    def __init__(self):
+        self.verbose = False
+        self.backend = None
+        self.app_log = None
+        super().__init__()
+
+    async def handle_stream(self, stream, address):
+        """Async. Handles the lifespan of a client, from connection to end of stream"""
+        peer_ip, fileno = address
+        self.app_log.info(f"TornadoComServer: Incoming connection from {peer_ip}")
+        try:
+            # Get first message, we expect an hello with version number and address
+            # msg = await async_receive(stream, peer_ip)
+            pass
+        except:
+            pass

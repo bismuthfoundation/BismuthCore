@@ -16,7 +16,7 @@ class BismuthConfig:
     # "param_name": ["type", default_value]
     _vars={
         # Node items
-        "node_port": ["int", 5658],
+        "node_port": ["int", 5659],
         "node_address": ["str", ''],
         "node_version": ["str", "mainnet0018"],
         "node_version_allow": ["list", ['mainnet0017', 'mainnet0018', 'mainnet0019']],

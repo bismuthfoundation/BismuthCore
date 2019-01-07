@@ -23,7 +23,7 @@ This way, you will use your local version instead of the pip one, but still be a
 
 ## Relationship to BismuthClient
 
-BismuthClient is another PIP module that targets walelts and dApps usage.
+BismuthClient is another PIP module that targets wallets and dApps usage.
 
 However, some classes and code can be common to both packages.  
 Why the need for clear versioning and a version number in every class file.  
@@ -48,32 +48,44 @@ In practice:
 
 ## Status
 
-All code atm is only copied over from node or bismuthclient repo.    
-Nothing is in working state nor coherent.
+Code begins to be sorted out but far from final.      
+Nothing is supposed to be in working state nor coherent yet.
 
-Worked on files will be added there in due time.
+Worked on files are listed thereafter with comments being edited as work goes on.
 
 - structures.py  
-  First draft of the core objects. Transaction class. Compact storage as native properties, and seamless read from/to any needed format.
+  First draft of the core objects. Transaction class. Compact storage as native properties, and seamless read from/to any needed format.  
+  Lowlevel objects, not supposed to be worked on once working.  
   
 - bismuthconfig.py  
   BismuthConfig class, settings loading and default values.  
   Reorganized key names.
+  Lowlevel object, not supposed to be worked on once working, except for adding config items.
   
 - bismuthcore.py  
-  First draft of the BismuthNode class
+  First draft of the main BismuthNode class
   
 - combackend.py  
-  Abstract ancestors for communication backends
-  
+  Abstract ancestors for communication backends  
+  Lowlevel object, not supposed to be worked on once working.
+    
 - tornadobackend.py  
-  First draft of an Async, tornado based communication backend.
+  First draft of an Async, tornado based communication backend.  
+  Lowlevel object, not supposed to be worked on once working. 
+
+- helpers.py  
+  Helper classes and functions.  
+  Lowlevel object, not supposed to be worked on once working.
+  
+- clientcommands.py  
+  Handler for the commands used by the core clients, not the node themselves.
   
 - Utils/convert_db.py  
   First tests of db conversion to assess gain of storage space as well as alternatives storage format. 
   
 - Utils/bisnode.py  
-  Non working draft of a Bismuth node/daemon.
+  Draft of a Bismuth node/daemon. Answers to statusjson only.
+
 
 ## Client
 

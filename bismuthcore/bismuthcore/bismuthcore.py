@@ -9,6 +9,7 @@ import logging
 
 from time import time
 import aioprocessing
+from bismuthcore.helpers import BismuthBase
 
 # from sys import exit
 
@@ -19,25 +20,19 @@ CLIENT_COMMANDS = ('statusjson', )
 CORE_COMMANDS =('version', 'getversion', 'hello', 'mempool')
 
 
-class BismuthNode:
+class BismuthNode(BismuthBase):
     """Main Bismuth node class. Should probably be a network backend agnostic class"""
 
-    __slots__ = ('app_log', 'verbose', 'config', 'stop_event', 'com_backend', 'connecting', 'startup_time')
+    __slots__ = ('stop_event', 'com_backend', 'connecting', 'startup_time')
 
     def __init__(self, app_log=None, config=None, verbose: bool=False,
                  com_backend_class_name: str='TornadoBackend'):
         """Init the node components"""
+        super().__init__(app_log, config, verbose)
         self.startup_time = time()
-        self.verbose = verbose
-        self.config = config
         self.connecting = False  # If true, manager tries to connect to peers
-        if app_log:
-            self.app_log = app_log
-        elif logging.getLogger("tornado.application"):
-            self.app_log = logging.getLogger("tornado.application")
-        else:
-            self.app_log = logging
         self.stop_event = aioprocessing.AioEvent()
+        # load the backend class from the provided name
         backend_class = getattr(importlib.import_module(f"bismuthcore.{com_backend_class_name.lower()}"), com_backend_class_name)
         self.com_backend = backend_class(self, app_log=app_log, config=config, verbose=verbose)
         self._check()
@@ -53,15 +48,9 @@ class BismuthNode:
         if self.verbose:
             self.app_log.info("Node: Run")
         self.com_backend.serve()
-        """        
-        loop = asyncio.get_event_loop()
-        while not self.stop_event.is_set():
-            # This was to simulate some server
-            loop.create_task(asyncio.sleep(1))
-        """
 
     async def manager(self):
-        """Background main coroutine"""
+        """Background main co-routine"""
         self.app_log.info("Manager starting...")
         while not self.stop_event.is_set():
             # TODO...
@@ -75,16 +64,16 @@ class BismuthNode:
             # Status display for Peers related info
             peers.status_log()
             """
-            for i in range(self.config.node_pause):
-                if not self.stop_event.is_set():
-                    await asyncio.sleep(1)
-            # print('.')
+            await self._async_wait(self.config.node_pause)
 
         self.app_log.info("Manager stopped...")
 
     async def process_legacy_command(self, command):
-        """Dispatch command to the right handler"""
-        # print(command)  # {'command': 'statusjson', 'params': [], 'ip', 'connector'}
+        """
+        Dispatch command to the right handler
+
+        TODO: make command an object
+        """
         try:
             self.app_log.info(f"Got Legacy command {command['command']} from {command['connector'].ip}.")
             if command['command'] in CLIENT_COMMANDS:
@@ -134,7 +123,13 @@ class BismuthNode:
             self.app_log.warning(f"Error {e} in process_legacy_client_command")
 
     def connect(self, connect=True):
+        """If connect is True, manager will try to connect to peers."""
         self.connecting = connect
+
+    async def _async_wait(self, seconds):
+        for i in range(seconds):
+            if not self.stop_event.is_set():
+                await asyncio.sleep(1)
 
     def _finalize(self):
         """Maintenance method to be called when stopping"""

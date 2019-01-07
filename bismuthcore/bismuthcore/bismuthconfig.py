@@ -7,10 +7,12 @@ from os import path
 from pprint import pprint
 from sys import exc_info
 
-__version__ = '0.0.2'
+from bismuthcore.helpers import BismuthBase
+
+__version__ = '0.0.3'
 
 
-class BismuthConfig:
+class BismuthConfig(BismuthBase):
 
     # "param_name": ["type", default_value]
     _vars={
@@ -56,14 +58,7 @@ class BismuthConfig:
 
     def __init__(self, app_log=None, verbose: bool=False):
         """Fill config in, and use info from local config files if they exist."""
-        self.verbose = verbose
-        if app_log:
-            self.app_log = app_log
-        elif logging.getLogger("tornado.application"):
-            self.app_log = logging.getLogger("tornado.application")
-        else:
-            self.app_log = logging
-
+        super().__init__(app_log, verbose=verbose)
         # Default genesis to keep compatibility - Hardcoded, can't be changed by config.
         self.genesis = '4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed'
 

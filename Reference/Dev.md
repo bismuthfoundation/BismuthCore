@@ -72,5 +72,9 @@ Worked on files will be added there in due time.
 - Utils/convert_db.py  
   First tests of db conversion to assess gain of storage space as well as alternatives storage format. 
   
-- Utils/node_test.py  
-  Non working draft of a Bismuth node.
+- Utils/bisnode.py  
+  Non working draft of a Bismuth node/daemon.
+
+## Client
+
+- Use Antimony

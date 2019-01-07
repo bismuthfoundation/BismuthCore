@@ -52,3 +52,16 @@ class ComClient(ABC):
     @abstractmethod
     def connect(self, host: str = '', port: int = 0):
         pass
+
+
+class Connector(ABC):
+
+    __slots__ = ('ip', 'app_log')
+
+    def __init__(self, app_log, ip: str=''):
+        self.app_log = app_log
+        self.ip = ip
+
+    @abstractmethod
+    async def send_legacy(self, data):
+        pass

@@ -6,7 +6,7 @@ import asyncio
 import json
 import socket
 
-from bismuthcore.combackend import ComBackend, ComClient
+from bismuthcore.combackend import ComBackend, ComClient, Connector
 from tornado.ioloop import IOLoop
 # from tornado.options import define, options
 # from tornado import gen
@@ -33,7 +33,7 @@ class TornadoBackend(ComBackend):
     def serve(self):
         """Begins to listen to the net"""
         self.app_log.info("Tornado: Serve")
-        loop = IOLoop.instance()
+        loop = IOLoop.current()
         if self.config.log_debug:
             loop.set_debug(True)
         try:
@@ -42,11 +42,10 @@ class TornadoBackend(ComBackend):
             server.bind(self.port, backlog=128, address=self.address, reuse_port=REUSE_PORT)
             server.start(1)  # Forks multiple sub-processes
             self.app_log.info(f"Starting server on tcp://{self.address}:{self.port}, reuse_port={REUSE_PORT}")
-            io_loop = IOLoop.instance()
-            io_loop.spawn_callback(self.node.manager)
+            loop.spawn_callback(self.node.manager)
             self.node.connect()
             try:
-                io_loop.start()
+                loop.start()
             except KeyboardInterrupt:
                 self.app_log.info("TornadoBackend: got quit signal")
                 self.node.stop_event.set()
@@ -117,8 +116,15 @@ class TornadoComServer(TCPServer):
             stream_handler = LegacyStreamHandler(stream, self.app_log, peer_ip, timeout=self.config.node_timeout)
             # Get first message, we expect an hello with version number and address
             # msg = await async_receive(stream, peer_ip)
-            msg = stream_handler.receive()
-            print('TornadoComServer: got', msg)
+            # msg = stream_handler.receive()
+            msg = await stream_handler._receive()
+            # print('TornadoComServer: got', msg)
+            connector = TornadoConnector(self.app_log, stream, peer_ip)
+            # TODO: depending on the command, wait for more packets
+            command = {'command': msg, 'params': [], 'connector': connector}
+            # TODO: use a core structure with from/to to convert ?
+            # Convert here or in bismuthcore? or just use different classes like for the backend?
+            await self.backend.node.process_legacy_command(command)
         except:
             pass
 
@@ -131,7 +137,12 @@ class LegacyStreamHandler:
     def __init__(self, stream: IOStream, app_log, ip: str='', port: int=0, loop: IOLoop=None, timeout=45):
         self.stream = stream
         self.app_log = app_log
-        self.loop = loop if loop else IOLoop.instance()
+        self.loop = loop if loop else IOLoop.current()
+        """
+        print(loop)
+        print(asyncio.get_event_loop())
+        print(IOLoop.instance())
+        """
         self.connected = False
         self.ip = ip
         self.port = port
@@ -166,13 +177,7 @@ class LegacyStreamHandler:
         return future.result(timeout)
 
     async def _send(self, data):
-        """
-        sends an object to the stream, async.
-        :param data:
-        :param stream:
-        :param ip:
-        :return:
-        """
+        """"sends an object to the stream, async."""
         if self.stream:
             try:
                 data = str(json.dumps(data))
@@ -195,3 +200,25 @@ class LegacyStreamHandler:
         else:
             self.app_log.warning('command: not connected')
             return None
+
+
+class TornadoConnector(Connector):
+
+    __slots__ = ('stream', )
+
+    def __init__(self, app_log, stream: IOStream, ip: str=''):
+        super().__init__(app_log, ip)
+        self.stream = stream
+
+    async def send_legacy(self, data):
+        if self.stream:
+            try:
+                data = str(json.dumps(data))
+                header = str(len(data)).encode("utf-8").zfill(10)
+                full = header + data.encode('utf-8')
+                await self.stream.write(full)
+            except Exception as e:
+                self.app_log.error(f"send_to_stream {e} for ip {self.ip}:{self.port}")
+                self.stream = None
+                raise
+        pass

@@ -6,15 +6,16 @@ import aioprocessing
 import asyncio
 import logging
 import socket
+import json
 from tornado.ioloop import IOLoop
 # from tornado.options import define, options
 # from tornado import gen
-from tornado.iostream import StreamClosedError
+from tornado.iostream import StreamClosedError, IOStream
 from tornado.tcpclient import TCPClient
 from tornado.tcpserver import TCPServer
 from bismuthcore.combackend import ComBackend, ComClient
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 # Some systems do not support reuse_port
 REUSE_PORT = hasattr(socket, "SO_REUSEPORT")
@@ -33,20 +34,18 @@ class TornadoBackend(ComBackend):
     def serve(self):
         """Begins to listen to the net"""
         self.app_log.info("Tornado: Serve")
-        loop = asyncio.get_event_loop()
+        loop = IOLoop.instance()
         if self.config.log_debug:
             loop.set_debug(True)
         try:
-            server = TornadoComServer()
-            server.verbose = self.verbose
-            server.backend = self
+            server = TornadoComServer(self, self.app_log, self.config, self.verbose)
             # server.listen(port)
             server.bind(self.port, backlog=128, address=self.address, reuse_port=REUSE_PORT)
             server.start(1)  # Forks multiple sub-processes
             self.app_log.info(f"Starting server on tcp://{self.address}:{self.port}, reuse_port={REUSE_PORT}")
             io_loop = IOLoop.instance()
-            # io_loop.spawn_callback(self.node.manager)
-            # self.node.connect()
+            io_loop.spawn_callback(self.node.manager)
+            self.node.connect()
             try:
                 io_loop.start()
             except KeyboardInterrupt:
@@ -71,8 +70,9 @@ class TornadoBackend(ComBackend):
 
 class TornadoComClient(ComClient):
 
-    def __init__(self, host:str='', port: int=0, app_log=None):
-        super().__init__(host, port, app_log)
+    def __init__(self, config, host:str='', port: int=0, app_log=None):
+        super().__init__(config, host, port, app_log)
+        self.stream_handler = None
 
     async def connect(self, host:str='', port: int=0):
         """Tries to connect and returns connected status"""
@@ -81,15 +81,27 @@ class TornadoComClient(ComClient):
         if port:
             self.port = port
         self.app_log.info(f"TornadoComClient: connect to '{self.host}:{self.port}'.")
+        try:
+            stream = await TCPClient().connect(self.ip, self.port)
+            if stream:
+                self.app_log.info("connected to {}".format(self.ip_port))
+                self.stream_handler = LegacyStreamHandler(self.stream, self.app_log, self.ip, self.port,
+                                                          timeout=self.config.node_timeout)
+        except Exception as e:
+            self.app_log.warning("Could not connect to {self.ip}:{self.port} ({e})")
+
+    def close(self):
+        self.stream_handler.close()
 
 
 class TornadoComServer(TCPServer):
     """Tornado asynchronous TCP server."""
 
-    def __init__(self):
-        self.verbose = False
-        self.backend = None
-        self.app_log = None
+    def __init__(self, backend, app_log, config, verbose: bool=False):
+        self.backend = backend
+        self.app_log = app_log
+        self.config = config
+        self.verbose = verbose
         super().__init__()
 
     async def handle_stream(self, stream, address):
@@ -97,8 +109,84 @@ class TornadoComServer(TCPServer):
         peer_ip, fileno = address
         self.app_log.info(f"TornadoComServer: Incoming connection from {peer_ip}")
         try:
+            stream_handler = LegacyStreamHandler(stream, self.app_log, peer_ip, timeout=self.config.node_timeout)
             # Get first message, we expect an hello with version number and address
             # msg = await async_receive(stream, peer_ip)
-            pass
+            msg = stream_handler.receive()
+            print('TornadoComServer: got', msg)
         except:
             pass
+
+
+class LegacyStreamHandler:
+    """A helper to process legacy low level protocol on top of async streams"""
+
+    __slots__ = ('stream', 'app_log', 'loop', 'connected', 'ip', 'port', 'timeout')
+
+    def __init__(self, stream: IOStream, app_log, ip: str='', port: int=0, loop: IOLoop=None, timeout=45):
+        self.stream = stream
+        self.app_log = app_log
+        self.loop = loop if loop else IOLoop.instance()
+        self.connected = False
+        self.ip = ip
+        self.port = port
+        self.timeout = timeout
+
+    def close(self):
+        if self.stream:
+            self.stream.close()
+            self.stream = None
+
+    async def _receive(self):
+        """Async. Get a command"""
+        if self.stream:
+            header = await self.stream.read_bytes(10)
+            data_len = int(header)
+            data = await self.stream.read_bytes(data_len)
+            data = json.loads(data.decode("utf-8"))
+            return data
+        else:
+            self.app_log.warning('receive: not connected')
+
+    def receive(self, timeout=None):
+        future = asyncio.run_coroutine_threadsafe(self._receive(), self.loop)
+        return future.result(timeout)
+
+    def send(self, data, timeout=None):
+        future = asyncio.run_coroutine_threadsafe(self._send(data), self.loop)
+        return future.result(timeout)
+
+    def command(self, data, param=None, timeout=None):
+        future = asyncio.run_coroutine_threadsafe(self._command(data, param), self.loop)
+        return future.result(timeout)
+
+    async def _send(self, data):
+        """
+        sends an object to the stream, async.
+        :param data:
+        :param stream:
+        :param ip:
+        :return:
+        """
+        if self.stream:
+            try:
+                data = str(json.dumps(data))
+                header = str(len(data)).encode("utf-8").zfill(10)
+                full = header + data.encode('utf-8')
+                await self.stream.write(full)
+            except Exception as e:
+                self.app_log.error(f"send_to_stream {e} for ip {self.ip}:{self.port}")
+                self.stream = None
+                raise
+        else:
+            self.app_log.warning('send: not connected')
+
+    async def _command(self, data, param=None):
+        if self.stream:
+            await self._send(data)
+            if param:
+                await self._send(param)
+            return await self._receive()
+        else:
+            self.app_log.warning('command: not connected')
+            return None

@@ -27,7 +27,7 @@ def most_common(lst: list):
 
 def most_common_dict(a_dict: dict):
     """Returns the most common value from a dict. Used by consensus"""
-    val_list = a_dict.values()
+    val_list = list(a_dict.values())
     return max(set(val_list), key=val_list.count)
 
 
@@ -430,7 +430,7 @@ class Peers:
 
             self.consensus = most_common_dict(self.peer_opinion_dict)
 
-            self.consensus_percentage = percentage_in(self.peer_opinion_dict[peer_ip],self.peer_opinion_dict.values())
+            self.consensus_percentage = percentage_in(self.peer_opinion_dict[peer_ip],list(self.peer_opinion_dict.values()))
 
             if int(consensus_blockheight) > int(self.consensus) + 30 and self.consensus_percentage > 50 and len(self.peer_opinion_dict) > 10:
                 if self.warning(sdef, peer_ip, "Consensus deviation too high", 10):

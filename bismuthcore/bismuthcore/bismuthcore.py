@@ -15,13 +15,14 @@ __version__ = '0.0.3'
 class BismuthNode:
     """Main Bismuth node class. Should probably be a network backend agnostic class"""
 
-    __slots__ = ('app_log', 'verbose', 'config', 'stop_event', 'com_backend')
+    __slots__ = ('app_log', 'verbose', 'config', 'stop_event', 'com_backend', 'connecting')
 
     def __init__(self, app_log=None, config=None, verbose: bool=False,
                  com_backend_class_name: str='TornadoBackend'):
         """Init the node components"""
         self.verbose = verbose
         self.config = config
+        self.connecting = False  # If true, manager tries to connect to peers
         if app_log:
             self.app_log = app_log
         elif logging.getLogger("tornado.application"):
@@ -50,6 +51,18 @@ class BismuthNode:
             # This was to simulate some server
             loop.create_task(asyncio.sleep(1))
         """
+
+    def manager(self):
+        self.app_log.info("Manager starting...")
+        loop = asyncio.get_event_loop()
+        while not self.stop_event.is_set():
+
+            loop.create_task(asyncio.sleep(self.config.node_pause))
+
+        self.app_log.info("Manager stopped...")
+
+    def connect(self, connect=True):
+        self.connecting = connect
 
     def _finalize(self):
         """Maintenance method to be called when stopping"""

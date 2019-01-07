@@ -5,7 +5,7 @@ Communication classes ancestors.
 import logging
 from abc import ABC, abstractmethod
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 class ComBackend(ABC):
@@ -36,8 +36,9 @@ class ComBackend(ABC):
 class ComClient(ABC):
     """Abstract Ancestor for Communication clients"""
 
-    def __init__(self, host: str = '', port: int = 0, app_log=None):
+    def __init__(self, config, host: str = '', port: int = 0, app_log=None):
         self.async = True  # Tells whether this backend is async or not (else it would be threaded).
+        self.config = config
         self.port = port
         self.host = host
         # TODO: factorize this app_log thing into a helper class

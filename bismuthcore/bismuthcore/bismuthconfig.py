@@ -17,6 +17,7 @@ class BismuthConfig:
     _vars={
         # Node items
         "node_port": ["int", 2829],
+        "node_timeout": ["int", 45],
         "node_address": ["str", ''],
         # "node_version": ["str", "mainnet0018"],
         # "node_version_allow": ["list", ['mainnet0017', 'mainnet0018', 'mainnet0019']],
@@ -24,10 +25,11 @@ class BismuthConfig:
         "node_version": ["str", "testnet"],
         "node_version_allow": ["list", ['testnet']],
         "node_testnet": ["bool", True],
+        # 51.15.97.143
 
         "node_regnet": ["bool", False],
         "node_thread_limit": ["int", 24],
-        "node_pause": ["int", 6],
+        "node_pause": ["int", 5],
         "node_tor": ["bool", False],
         # "node_diff_recalc": ["int", 50000],
         # Log related
@@ -51,7 +53,7 @@ class BismuthConfig:
         # mempool items
         "mempool_allowed": ["list", ['edf2d63cdf0b6275ead22c9e6d66aa8ea31dc0ccb367fad2e7c08a25', '4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed']],
         "mempool_ram_conf": ["bool", True],
-    }
+        }
 
     def __init__(self, app_log=None, verbose: bool=False):
         """Fill config in, and use info from local config files if they exist."""

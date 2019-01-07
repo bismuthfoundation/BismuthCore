@@ -29,7 +29,7 @@ class BismuthNode:
         else:
             self.app_log = logging
         self.stop_event = aioprocessing.AioEvent()
-        backend_class = getattr(importlib.import_module(com_backend_class_name.lower()), com_backend_class_name)
+        backend_class = getattr(importlib.import_module(f"bismuthcore.{com_backend_class_name.lower()}"), com_backend_class_name)
         self.com_backend = backend_class(self, app_log=app_log, config=config, verbose=verbose)
         self._check()
 
@@ -37,6 +37,7 @@ class BismuthNode:
         """Initial check of all config, data and db"""
         if self.verbose:
             self.app_log.info("Node: Initial Check...")
+        # TODO
 
     def run(self):
         """Begins to listen to the net"""
@@ -52,7 +53,7 @@ class BismuthNode:
 
     def _finalize(self):
         """Maintenance method to be called when stopping"""
-        pass
+        self.com_backend.stop()  # May not be needed since the backend has access to our stop_event
         # TODO
 
     def stop(self):

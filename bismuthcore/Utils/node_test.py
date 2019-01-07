@@ -11,9 +11,9 @@ from os import path
 from cloghandler import ConcurrentRotatingFileHandler
 
 
-sys.path.append('../bismuthcore')
-from bismuthconfig import BismuthConfig
-from bismuthcore import BismuthNode
+sys.path.append('../')
+from bismuthcore.bismuthconfig import BismuthConfig
+from bismuthcore.bismuthcore import BismuthNode
 
 
 __version__ = '0.0.1'

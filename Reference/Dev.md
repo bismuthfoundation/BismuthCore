@@ -60,5 +60,17 @@ Worked on files will be added there in due time.
   BismuthConfig class, settings loading and default values.  
   Reorganized key names.
   
+- bismuthcore.py  
+  First draft of the BismuthNode class
+  
+- combackend.py  
+  Abstract ancestors for communication backends
+  
+- tornadobackend.py  
+  First draft of an Async, tornado based communication backend.
+  
 - Utils/convert_db.py  
   First tests of db conversion to assess gain of storage space as well as alternatives storage format. 
+  
+- Utils/node_test.py  
+  Non working draft of a Bismuth node.

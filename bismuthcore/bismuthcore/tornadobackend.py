@@ -2,18 +2,17 @@
 
 """Main module."""
 
-import aioprocessing
 import asyncio
-import logging
-import socket
 import json
+import socket
+
+from bismuthcore.combackend import ComBackend, ComClient
 from tornado.ioloop import IOLoop
 # from tornado.options import define, options
 # from tornado import gen
-from tornado.iostream import StreamClosedError, IOStream
+from tornado.iostream import IOStream
 from tornado.tcpclient import TCPClient
 from tornado.tcpserver import TCPServer
-from bismuthcore.combackend import ComBackend, ComClient
 
 __version__ = '0.0.3'
 

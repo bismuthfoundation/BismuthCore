@@ -4,10 +4,12 @@
 
 
 import asyncio
-import logging
 import importlib
+import logging
+
 import aioprocessing
-from sys import exit
+
+# from sys import exit
 
 __version__ = '0.0.4'
 

@@ -3,10 +3,9 @@ BismuthConfig class, derived from legacy options.py
 """
 
 import logging
-from pprint import pprint
 from os import path
+from pprint import pprint
 from sys import exc_info
-
 
 __version__ = '0.0.2'
 

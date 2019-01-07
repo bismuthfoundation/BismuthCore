@@ -16,11 +16,15 @@ class BismuthConfig:
     # "param_name": ["type", default_value]
     _vars={
         # Node items
-        "node_port": ["int", 5659],
+        "node_port": ["int", 2829],
         "node_address": ["str", ''],
-        "node_version": ["str", "mainnet0018"],
-        "node_version_allow": ["list", ['mainnet0017', 'mainnet0018', 'mainnet0019']],
-        "node_testnet": ["bool", False],
+        # "node_version": ["str", "mainnet0018"],
+        # "node_version_allow": ["list", ['mainnet0017', 'mainnet0018', 'mainnet0019']],
+        # "node_testnet": ["bool", False],
+        "node_version": ["str", "testnet"],
+        "node_version_allow": ["list", ['testnet']],
+        "node_testnet": ["bool", True],
+
         "node_regnet": ["bool", False],
         "node_thread_limit": ["int", 24],
         "node_pause": ["int", 6],

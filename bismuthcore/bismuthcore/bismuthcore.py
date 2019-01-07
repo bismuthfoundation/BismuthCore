@@ -59,6 +59,7 @@ class BismuthNode:
         self.app_log.info("Manager starting...")
         loop = asyncio.get_event_loop()
         while not self.stop_event.is_set():
+            # TODO...
             """
             self.peers.manager_loop(target=worker)
 
@@ -72,8 +73,6 @@ class BismuthNode:
             for i in range(self.config.node_pause):
                 if not self.stop_event.is_set():
                     await asyncio.sleep(1)
-            self.stop()
-            # raise KeyboardInterrupt
 
         self.app_log.info("Manager stopped...")
 

@@ -15,7 +15,7 @@ from tornado.tcpclient import TCPClient
 from tornado.tcpserver import TCPServer
 from bismuthcore.combackend import ComBackend, ComClient
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 # Some systems do not support reuse_port
 REUSE_PORT = hasattr(socket, "SO_REUSEPORT")
@@ -49,10 +49,16 @@ class TornadoBackend(ComBackend):
             try:
                 io_loop.start()
             except KeyboardInterrupt:
+                self.app_log.info("TornadoBackend: got quit signal")
                 self.node.stop_event.set()
-                loop = asyncio.get_event_loop()
-                # loop.run_until_complete(self.mempool.async_close())
-                io_loop.stop()
+                """
+                # TODO: local cleanup if needed
+                try:
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(self.mempool.async_close())
+                except:
+                    pass
+                """
                 self.app_log.info("TornadoBackend: exited cleanly")
         except Exception as e:
             self.app_log.error(f"TornadoBackend Serve error: {e}")
@@ -60,7 +66,7 @@ class TornadoBackend(ComBackend):
     def stop(self):
         pass
         self.app_log.info("Tornado: Stop required")
-        # TODO
+        # TODO - local cleanup
 
     async def get_client(self, host, port):
         """ASYNC. Returns a connected ComClient instance, or None if connection wasn't possible"""

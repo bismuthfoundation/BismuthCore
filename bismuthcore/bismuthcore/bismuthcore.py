@@ -9,7 +9,7 @@ import importlib
 import aioprocessing
 from sys import exit
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
 class BismuthNode:
@@ -52,12 +52,26 @@ class BismuthNode:
             loop.create_task(asyncio.sleep(1))
         """
 
-    def manager(self):
+    async def manager(self):
+        """Background main coroutine"""
         self.app_log.info("Manager starting...")
         loop = asyncio.get_event_loop()
         while not self.stop_event.is_set():
+            """
+            self.peers.manager_loop(target=worker)
 
-            loop.create_task(asyncio.sleep(self.config.node_pause))
+            app_log.warning("Status: Threads at {} / {}".format(threading.active_count(), thread_limit_conf))
+            app_log.info("Status: Syncing nodes: {}".format(syncing))
+            app_log.info("Status: Syncing nodes: {}/3".format(len(syncing)))
+
+            # Status display for Peers related info
+            peers.status_log()
+            """
+            for i in range(self.config.node_pause):
+                if not self.stop_event.is_set():
+                    await asyncio.sleep(1)
+            self.stop()
+            # raise KeyboardInterrupt
 
         self.app_log.info("Manager stopped...")
 
@@ -74,7 +88,6 @@ class BismuthNode:
         self.app_log.info("Node: Trying to close nicely...")
         self.stop_event.set()
         self._finalize()
-        loop = asyncio.get_event_loop()
-        loop.create_task(asyncio.sleep(2))
         self.app_log.info("Bye!")
-        exit()
+        # Emulate ctrl-c to have the backend loop stop
+        raise KeyboardInterrupt

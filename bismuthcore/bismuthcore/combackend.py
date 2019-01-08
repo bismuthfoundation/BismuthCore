@@ -5,7 +5,7 @@ Communication classes ancestors.
 from abc import ABC, abstractmethod
 from bismuthcore.helpers import base_app_log
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 
 class ComBackend(ABC):
@@ -21,11 +21,15 @@ class ComBackend(ABC):
         self.address = config.get('node_address')
 
     @abstractmethod
-    def serve(self):
+    def serve(self) -> None:
         pass
 
     @abstractmethod
-    def stop(self):
+    def stop(self) -> None:
+        pass
+
+    @abstractmethod
+    def thread_count(self) -> int:
         pass
 
 
@@ -40,7 +44,7 @@ class ComClient(ABC):
         self.host = host
 
     @abstractmethod
-    def connect(self, host: str = '', port: int = 0):
+    def connect(self, host: str = '', port: int = 0) -> None:
         pass
 
 
@@ -54,5 +58,5 @@ class Connector(ABC):
         self.ip = ip
 
     @abstractmethod
-    async def send_legacy(self, data):
+    async def send_legacy(self, data) -> bool:
         pass

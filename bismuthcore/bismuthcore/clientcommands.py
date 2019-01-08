@@ -22,7 +22,7 @@ class ClientCommands(Commands):
                     diff, _ = [-1, -1]  # TODO self.chain.difficulty(c)
                     last_block = 0  # TODO
                     # TODO: depends on async or not.
-                    threads = 1  # threading.active_count()
+                    threads = self.node.thread_count()  # threading.active_count()
 
                     if self.config.peers_reveal_address:
                         revealed_address = 'TODO'  # TODO self.wallet.address

@@ -20,59 +20,8 @@ __version__ = '0.0.3'
 REUSE_PORT = hasattr(socket, "SO_REUSEPORT")
 
 
-class TornadoBackend(ComBackend):
-    """Try at a tornado powered backend"""
-
-    __slots__ = ('app_log', 'verbose', 'config', 'address', 'port', 'address', 'stop_event', 'node', 'async')
-
-    def __init__(self, node, app_log=None, config=None, verbose: bool=False):
-        super().__init__(node, app_log, config, verbose)
-        self.async = True  # Tells whether this backend is async or not (else it would be threaded).
-        self.app_log.info(f"Tornado: Init port {self.port} on address '{self.address}'.")
-
-    def serve(self):
-        """Begins to listen to the net"""
-        self.app_log.info("Tornado: Serve")
-        loop = IOLoop.current()
-        if self.config.log_debug:
-            loop.set_debug(True)
-        try:
-            server = TornadoComServer(self, self.app_log, self.config, self.verbose)
-            # server.listen(port)
-            server.bind(self.port, backlog=128, address=self.address, reuse_port=REUSE_PORT)
-            server.start(1)  # Forks multiple sub-processes
-            self.app_log.info(f"Starting server on tcp://{self.address}:{self.port}, reuse_port={REUSE_PORT}")
-            loop.spawn_callback(self.node.manager)
-            self.node.connect()
-            try:
-                loop.start()
-            except KeyboardInterrupt:
-                self.app_log.info("TornadoBackend: got quit signal")
-                self.node.stop_event.set()
-                """
-                # TODO: local cleanup if needed
-                try:
-                    loop = asyncio.get_event_loop()
-                    loop.run_until_complete(self.mempool.async_close())
-                except:
-                    pass
-                """
-                self.app_log.info("TornadoBackend: exited cleanly")
-        except Exception as e:
-            self.app_log.error(f"TornadoBackend Serve error: {e}")
-
-    def stop(self):
-        pass
-        self.app_log.info("Tornado: Stop required")
-        # TODO - local cleanup
-
-    async def get_client(self, host, port):
-        """ASYNC. Returns a connected ComClient instance, or None if connection wasn't possible"""
-        pass
-        # TODO - have the caller use await or not, or get the ioloop from here and call sync'd?
-
-
 class TornadoComClient(ComClient):
+    """An async TCP client"""
 
     def __init__(self, config, host:str='', port: int=0, app_log=None):
         super().__init__(config, host, port, app_log)
@@ -95,7 +44,69 @@ class TornadoComClient(ComClient):
             self.app_log.warning("Could not connect to {self.ip}:{self.port} ({e})")
 
     def close(self):
-        self.stream_handler.close()
+        """Be sure to call this one, or the thread count won't be correct."""
+        try:
+            self.stream_handler.close()
+        except:
+            pass
+
+
+class TornadoBackend(ComBackend):
+    """Try at a tornado powered backend"""
+
+    __slots__ = ('app_log', 'verbose', 'config', 'address', 'port', 'address', 'stop_event', 'node', 'async',
+                 'threads')
+
+    def __init__(self, node, app_log=None, config=None, verbose: bool=False):
+        super().__init__(node, app_log, config, verbose)
+        self.async = True  # Tells whether this backend is async or not (else it would be threaded).
+        self.threads = 0  # Improper, these are co-routines.
+        self.app_log.info(f"Tornado: Init port {self.port} on address '{self.address}'.")
+
+    def serve(self) -> None:
+        """Begins to listen to the net"""
+        self.app_log.info("Tornado: Serve")
+        loop = IOLoop.current()
+        if self.config.log_debug:
+            loop.set_debug(True)
+        try:
+            server = TornadoComServer(self, self.app_log, self.config, self.verbose)
+            # server.listen(port)
+            server.bind(self.port, backlog=128, address=self.address, reuse_port=REUSE_PORT)
+            server.start(1)  # Forks multiple sub-processes
+
+            self.app_log.info(f"Starting Tornado Server on tcp://{self.address}:{self.port}, reuse_port={REUSE_PORT}")
+
+            # Local init
+            loop.spawn_callback(self.node.manager)
+            self.node.connect()
+
+        except Exception as e:
+            self.app_log.error(f"TornadoBackend Serve error: {e}")
+
+    def stop(self) -> None:
+        pass
+        self.app_log.info("Tornado: Stop required")
+        # TODO - local cleanup
+
+    def thread_count(self) -> int:
+        return self.threads
+
+    async def get_client(self, host, port) -> TornadoComClient:
+        """ASYNC. Returns a connected ComClient instance, or None if connection wasn't possible"""
+        pass
+        self.threads += 1
+        client = TornadoComClient(self.config, host, port, app_log=self.app_log)
+        await client.connect()
+        return client
+
+    def close_client(self, client: TornadoComClient) -> None:
+        """Be sure to call this one, or the thread count won't be correct."""
+        try:
+            client.close()
+            self.threads -= 1
+        except:
+            pass
 
 
 class TornadoComServer(TCPServer):
@@ -112,6 +123,7 @@ class TornadoComServer(TCPServer):
         """Async. Handles the lifespan of a client, from connection to end of stream"""
         peer_ip, fileno = address
         self.app_log.info(f"TornadoComServer: Incoming connection from {peer_ip}")
+        self.backend.threads += 1
         try:
             stream_handler = LegacyStreamHandler(stream, self.app_log, peer_ip, timeout=self.config.node_timeout)
             # Get first message, we expect an hello with version number and address
@@ -127,6 +139,8 @@ class TornadoComServer(TCPServer):
             await self.backend.node.process_legacy_command(command)
         except:
             pass
+        finally:
+            self.backend.threads -= 1
 
 
 class LegacyStreamHandler:

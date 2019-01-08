@@ -5,12 +5,12 @@
 
 import asyncio
 import importlib
-import logging
-
 from time import time
+
 import aioprocessing
-from bismuthcore.helpers import BismuthBase
 from bismuthcore.clientcommands import ClientCommands
+from bismuthcore.helpers import BismuthBase
+from tornado.ioloop import IOLoop
 
 # from sys import exit
 
@@ -37,13 +37,14 @@ class BismuthNode(BismuthBase):
         self._client_commands = ClientCommands(self)
         self._check()
 
-    def _check(self):
+    def _check(self) -> bool:
         """Initial check of all config, data and db"""
         if self.verbose:
             self.app_log.info("Node: Initial Check...")
         # TODO
+        return True
 
-    def run(self):
+    def run(self) -> None:
         """Begins to listen to the net"""
         if self.verbose:
             self.app_log.info("Node: Run")
@@ -51,8 +52,24 @@ class BismuthNode(BismuthBase):
         self._com_backend.serve()
         # TODO: start() the IOLoop from here, so we can start several servers (json-rpc, wallet server) in the loop.
         # Or create a new process per server? More sync issues or can play well?
+        loop = IOLoop.current()
+        try:
+            loop.start()
+        except KeyboardInterrupt:
+            self.app_log.info("BismuthNode: got quit signal")
+            self.stop_event.set()
+            self._com_backend.stop()
+            """
+            # TODO: local cleanup if needed
+            try:
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(self.mempool.async_close())
+            except:
+                pass
+            """
+            self.app_log.info("BismuthNode: exited cleanly")
 
-    async def manager(self):
+    async def manager(self) -> None:
         """Background main co-routine"""
         self.app_log.info("Manager starting...")
         while not self.stop_event.is_set():
@@ -71,7 +88,7 @@ class BismuthNode(BismuthBase):
 
         self.app_log.info("Manager stopped...")
 
-    async def process_legacy_command(self, command):
+    async def process_legacy_command(self, command) -> None:
         """
         Dispatch command to the right handler. Called by the communication backend.
 
@@ -89,21 +106,26 @@ class BismuthNode(BismuthBase):
         except Exception as e:
             self.app_log.warning(f"Error {e} in process_legacy_command")
 
-    def connect(self, connect=True):
+    def connect(self, connect: bool=True) -> None:
         """If connect is True, manager will try to connect to peers."""
         self.connecting = connect
 
-    async def _async_wait(self, seconds):
+    def thread_count(self) -> int:
+        """Returns total count threads and/or clients + server coroutines running"""
+        # TODO: add other servers count, too
+        return self._com_backend.thread_count()
+
+    async def _async_wait(self, seconds: int) -> None:
         for i in range(seconds):
             if not self.stop_event.is_set():
                 await asyncio.sleep(1)
 
-    def _finalize(self):
+    def _finalize(self) -> None:
         """Maintenance method to be called when stopping"""
         self.com_backend.stop()  # May not be needed since the backend has access to our stop_event
         # TODO
 
-    def stop(self):
+    def stop(self) -> None:
         """Clean stop the node"""
         self.app_log.info("Node: Trying to close nicely...")
         self.stop_event.set()

@@ -14,7 +14,7 @@ from bismuthcore.bismuthconfig import BismuthConfig
 from bismuthcore.bismuthcore import BismuthNode
 
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 
 def get_logger():
@@ -36,12 +36,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Bismuth Dev Node')
     parser.add_argument("-v", "--verbose", action="count", default=False, help='Force to be verbose.')
     parser.add_argument("-l", "--level", type=str, default='WARNING', help='Force Log level: DEBUG, INFO, WARNING, ERROR')
+    parser.add_argument("-c", "--config", type=str, default='', help='Use that specific config file')
     args = parser.parse_args()
 
     app_log = get_logger()
 
     # Init config instance
-    config = BismuthConfig(app_log=app_log, verbose=args.verbose)
+    config = BismuthConfig(args.config, app_log=app_log, verbose=args.verbose)
     # And override with command line arguments
     if args.level:
         config.log_level = args.level

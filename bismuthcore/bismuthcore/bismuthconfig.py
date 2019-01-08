@@ -9,7 +9,7 @@ from sys import exc_info
 
 from bismuthcore.helpers import BismuthBase
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
 class BismuthConfig(BismuthBase):
@@ -18,6 +18,11 @@ class BismuthConfig(BismuthBase):
     _vars={
         # Node items
         "node_port": ["int", 2829],
+        # Should the node open it's listening interface? If not it won't accept incoming connections
+        "node_listen": ["bool", True],
+        # If not, won't do anything to the chain, won't try to connect, won't accept connections
+        # Could be used to run a wallet or json-rpc server in a different process
+        "node_active": ["bool", True],
         "node_timeout": ["int", 45],
         "node_address": ["str", ''],
         # "node_version": ["str", "mainnet0018"],
@@ -33,6 +38,13 @@ class BismuthConfig(BismuthBase):
         "node_pause": ["int", 5],
         "node_tor": ["bool", False],
         # "node_diff_recalc": ["int", 50000],
+        # integrated json-rpc - planned only, see https://github.com/EggPool/BismuthRPC/tree/master/RPCServer
+        "jsonrpc_port": ["int", 8115],
+        "jsonrpc_listen": ["bool", True],  # Should the node open it's json-rpc listening interface?
+        # integrated wallet server
+        "walletserver_port": ["int", 8150],
+        "walletserver_listen": ["bool", True],  # Should the node open it's wallet server listening interface?
+
         # Log related
         "log_debug": ["bool", False],
         "log_level": ["str", 'WARNING'],
@@ -56,7 +68,7 @@ class BismuthConfig(BismuthBase):
         "mempool_ram_conf": ["bool", True],
         }
 
-    def __init__(self, app_log=None, verbose: bool=False):
+    def __init__(self, config_filename: str='', app_log=None, verbose: bool=False):
         """Fill config in, and use info from local config files if they exist."""
         super().__init__(app_log, verbose=verbose)
         # Default genesis to keep compatibility - Hardcoded, can't be changed by config.
@@ -71,9 +83,11 @@ class BismuthConfig(BismuthBase):
 
         # Load from local config
         # TODO: move to user owned directory
-        self._load_file("config.txt")
+        if not config_filename:
+            config_filename = 'config.txt'
+        self._load_file(config_filename)
         # then override with optional custom config (won't be needed with user dir)
-        self._load_file("config_custom.txt")
+        # self._load_file("config_custom.txt")
         if self.verbose:
             pprint(self.__dict__)
 

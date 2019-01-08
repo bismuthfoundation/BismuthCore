@@ -47,7 +47,10 @@ class BismuthNode(BismuthBase):
         """Begins to listen to the net"""
         if self.verbose:
             self.app_log.info("Node: Run")
+
         self._com_backend.serve()
+        # TODO: start() the IOLoop from here, so we can start several servers (json-rpc, wallet server) in the loop.
+        # Or create a new process per server? More sync issues or can play well?
 
     async def manager(self):
         """Background main co-routine"""

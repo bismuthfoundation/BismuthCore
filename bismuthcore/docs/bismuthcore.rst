@@ -1,13 +1,20 @@
 bismuthcore package
 ===================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    bismuthcore.legacy
+
 Submodules
 ----------
 
-bismuthcore.apihandler module
------------------------------
+bismuthcore.bismuthconfig module
+--------------------------------
 
-.. automodule:: bismuthcore.apihandler
+.. automodule:: bismuthcore.bismuthconfig
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,58 +27,26 @@ bismuthcore.bismuthcore module
     :undoc-members:
     :show-inheritance:
 
-bismuthcore.bismuthcrypto module
---------------------------------
-
-.. automodule:: bismuthcore.bismuthcrypto
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-bismuthcore.bismuthformat module
---------------------------------
-
-.. automodule:: bismuthcore.bismuthformat
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-bismuthcore.bismuthutil module
-------------------------------
-
-.. automodule:: bismuthcore.bismuthutil
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-bismuthcore.bismuthwallet module
---------------------------------
-
-.. automodule:: bismuthcore.bismuthwallet
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-bismuthcore.mempool module
---------------------------
-
-.. automodule:: bismuthcore.mempool
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-bismuthcore.peershandler module
--------------------------------
-
-.. automodule:: bismuthcore.peershandler
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-bismuthcore.rpcconnections module
+bismuthcore.clientcommands module
 ---------------------------------
 
-.. automodule:: bismuthcore.rpcconnections
+.. automodule:: bismuthcore.clientcommands
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bismuthcore.combackend module
+-----------------------------
+
+.. automodule:: bismuthcore.combackend
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bismuthcore.helpers module
+--------------------------
+
+.. automodule:: bismuthcore.helpers
     :members:
     :undoc-members:
     :show-inheritance:
@@ -80,6 +55,22 @@ bismuthcore.simplecrypt module
 ------------------------------
 
 .. automodule:: bismuthcore.simplecrypt
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bismuthcore.structures module
+-----------------------------
+
+.. automodule:: bismuthcore.structures
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bismuthcore.tornadobackend module
+---------------------------------
+
+.. automodule:: bismuthcore.tornadobackend
     :members:
     :undoc-members:
     :show-inheritance:

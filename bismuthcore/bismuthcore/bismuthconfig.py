@@ -34,7 +34,8 @@ class BismuthConfig(BismuthBase):
         # 51.15.97.143
 
         "node_regnet": ["bool", False],
-        "node_thread_limit": ["int", 24],
+        "node_thread_limit": ["int", 24], # Maximum number of connections to keep/allow
+        "node_out_limit": ["int", 10],  # Number of active outgoing connections to start
         "node_pause": ["int", 5],
         "node_tor": ["bool", False],
         # "node_diff_recalc": ["int", 50000],
@@ -48,6 +49,7 @@ class BismuthConfig(BismuthBase):
         # Log related
         "log_debug": ["bool", False],
         "log_level": ["str", 'WARNING'],
+        "log_components": ["list", ["connections", "peers", "mempool", "blocks"]],
         # db_prefixed items are low level objects for chain object only.
         "db_verify": ["bool", False],
         "db_rebuild": ["bool", True],

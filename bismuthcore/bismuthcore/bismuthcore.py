@@ -11,6 +11,9 @@ import aioprocessing
 from bismuthcore.clientcommands import ClientCommands
 from bismuthcore.helpers import BismuthBase
 from tornado.ioloop import IOLoop
+from tornado.iostream import StreamClosedError
+from sys import exc_info
+from os import path
 
 # from sys import exit
 
@@ -21,8 +24,6 @@ CORE_COMMANDS =('version', 'getversion', 'hello', 'mempool')
 
 class BismuthNode(BismuthBase):
     """Main Bismuth node class. Should probably be a network backend agnostic class"""
-
-    __slots__ = ('stop_event', '_com_backend', 'connecting', 'startup_time', '_client_commands')
 
     def __init__(self, app_log=None, config=None, verbose: bool=False,
                  com_backend_class_name: str='TornadoBackend'):
@@ -36,6 +37,7 @@ class BismuthNode(BismuthBase):
         self._com_backend = backend_class(self, app_log=app_log, config=config, verbose=verbose)
         self._client_commands = ClientCommands(self)
         self._check()
+        self._clients = {}  # outgoing connections
 
     def _check(self) -> bool:
         """Initial check of all config, data and db"""
@@ -84,9 +86,61 @@ class BismuthNode(BismuthBase):
             # Status display for Peers related info
             peers.status_log()
             """
-            await self._async_wait(self.config.node_pause)
+            await self.reach_out()
+            await self._async_wait()
 
         self.app_log.info("Manager stopped...")
+
+    async def reach_out(self) -> None:
+        """Tries to connect to distant peers until node_out_limit is reached"""
+        if not self.connecting:
+            return
+        # Early exits allow to limit indentation levels and is more readable.
+        if len(self._clients) >= self.config.node_out_limit:
+            return
+        for peer in [('35.227.90.114', 2829), ('51.15.97.143', 2829), ('163.172.163.4', 2829), ('94.113.207.67', 2829)]:
+            ip, port = peer
+            if ip not in self._clients:
+                io_loop = IOLoop.current()
+                io_loop.spawn_callback(self.client_worker, ip, port)
+
+    async def client_worker(self, ip:str, port:int) -> None:
+        """Background co-routine handling outgoing connections to peers"""
+        if ip in self._clients:
+            return  # safety
+        if 'connections' in self.config.log_components:
+            self.app_log.info(f"Trying to reach out to {ip}:{port}.")
+        try:
+            client = await self._com_backend.get_client(ip, port)
+            # TODO: extend client object to store all what needed, use key => client
+            self._clients[ip] = {'client' :client}
+            while client.connected:
+                if 'connections' in self.config.log_components:
+                    self.app_log.info(f"Still connected to {ip}:{port}.")
+                await self._async_wait()
+
+        except StreamClosedError as e:
+            if 'connections' in self.config.log_components:
+                self.app_log.warning(f"Lost connection to {ip}:{port} because '{e}'.")
+                exc_type, exc_obj, exc_tb = exc_info()
+                fname = path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                self.app_log.debug(f"client_worker: Type '{exc_type}' fname '{fname}' line {exc_tb.tb_lineno}.")
+                return
+            # TODO: add to wait list not to try again too soon
+        except Exception as e:
+                self.app_log.warning(f"Lost connection to {ip}:{port} because '{e}'.")
+                exc_type, exc_obj, exc_tb = exc_info()
+                fname = path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                self.app_log.debug(f"client_worker2: Type '{exc_type}' fname '{fname}' line {exc_tb.tb_lineno}.")
+                return
+        finally:
+            try:
+                # We could keep it and set to inactive, but is it useful? could grow too much
+                # use a timeout?
+                self._com_backend.close_client(self._clients[ip]['client'])
+                del self._clients[ip]
+            except:
+                pass
 
     async def process_legacy_command(self, command) -> None:
         """
@@ -115,7 +169,9 @@ class BismuthNode(BismuthBase):
         # TODO: add other servers count, too
         return self._com_backend.thread_count()
 
-    async def _async_wait(self, seconds: int) -> None:
+    async def _async_wait(self, seconds: int=0) -> None:
+        if not seconds:
+            seconds = self.config.node_pause
         for i in range(seconds):
             if not self.stop_event.is_set():
                 await asyncio.sleep(1)

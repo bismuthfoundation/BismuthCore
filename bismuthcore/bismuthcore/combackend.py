@@ -5,7 +5,26 @@ Communication classes ancestors.
 from abc import ABC, abstractmethod
 from bismuthcore.helpers import base_app_log
 
-__version__ = '0.0.3'
+__version__ = '0.0.5'
+
+class ComClient(ABC):
+    """Abstract Ancestor for Communication clients. Used for outgoing connections."""
+
+    def __init__(self, config, host: str = '', port: int = 0, app_log=None):
+        self.app_log = base_app_log(app_log)
+        self.async = True  # Tells whether this backend is async or not (else it would be threaded).
+        self.config = config
+        self.port = port
+        self.host = host
+
+    @abstractmethod
+    def connect(self, host: str = '', port: int = 0) -> None:
+        pass
+
+    @abstractmethod
+    def connected(self) -> bool:
+        pass
+
 
 
 class ComBackend(ABC):
@@ -32,19 +51,11 @@ class ComBackend(ABC):
     def thread_count(self) -> int:
         pass
 
-
-class ComClient(ABC):
-    """Abstract Ancestor for Communication clients. Used for outgoing connections."""
-
-    def __init__(self, config, host: str = '', port: int = 0, app_log=None):
-        self.app_log = base_app_log(app_log)
-        self.async = True  # Tells whether this backend is async or not (else it would be threaded).
-        self.config = config
-        self.port = port
-        self.host = host
-
     @abstractmethod
-    def connect(self, host: str = '', port: int = 0) -> None:
+    async def get_client(self, host: str, port: int) -> ComClient:
+        pass
+
+    def close_client(self, client: ComClient) -> None:
         pass
 
 

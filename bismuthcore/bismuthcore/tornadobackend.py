@@ -14,7 +14,7 @@ from tornado.iostream import IOStream
 from tornado.tcpclient import TCPClient
 from tornado.tcpserver import TCPServer
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 # Some systems do not support reuse_port
 REUSE_PORT = hasattr(socket, "SO_REUSEPORT")
@@ -35,13 +35,14 @@ class TornadoComClient(ComClient):
             self.port = port
         self.app_log.info(f"TornadoComClient: connect to '{self.host}:{self.port}'.")
         try:
-            stream = await TCPClient().connect(self.ip, self.port)
+            stream = await TCPClient().connect(self.host, self.port)
             if stream:
-                self.app_log.info("connected to {}".format(self.ip_port))
-                self.stream_handler = LegacyStreamHandler(self.stream, self.app_log, self.ip, self.port,
+                self.app_log.info(f"Connected to {self.host}:{self.port}")
+                self.stream_handler = LegacyStreamHandler(stream, self.app_log, self.host, self.port,
                                                           timeout=self.config.node_timeout)
         except Exception as e:
-            self.app_log.warning("Could not connect to {self.ip}:{self.port} ({e})")
+            self.app_log.warning(f"Could not connect to {self.host}:{self.port} ({e})")
+            self.stream_handler = None
 
     def close(self):
         """Be sure to call this one, or the thread count won't be correct."""
@@ -49,6 +50,14 @@ class TornadoComClient(ComClient):
             self.stream_handler.close()
         except:
             pass
+
+    @property
+    def connected(self) -> bool:
+        if not self.stream_handler:
+            return False
+        if not self.stream_handler.stream:
+            return False
+        return True
 
 
 class TornadoBackend(ComBackend):
@@ -92,7 +101,7 @@ class TornadoBackend(ComBackend):
     def thread_count(self) -> int:
         return self.threads
 
-    async def get_client(self, host, port) -> TornadoComClient:
+    async def get_client(self, host: str, port: int) -> TornadoComClient:
         """ASYNC. Returns a connected ComClient instance, or None if connection wasn't possible"""
         pass
         self.threads += 1

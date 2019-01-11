@@ -5,7 +5,8 @@ Communication classes ancestors.
 from abc import ABC, abstractmethod
 from bismuthcore.helpers import base_app_log
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
+
 
 class ComClient(ABC):
     """Abstract Ancestor for Communication clients. Used for outgoing connections."""
@@ -25,6 +26,9 @@ class ComClient(ABC):
     def connected(self) -> bool:
         pass
 
+    @abstractmethod
+    async def command(self, data:str, param: list=None):
+        pass
 
 
 class ComBackend(ABC):

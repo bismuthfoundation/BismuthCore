@@ -9,6 +9,7 @@ from time import time
 
 import aioprocessing
 from bismuthcore.clientcommands import ClientCommands
+from bismuthcore.messages.coremessages import VersionMessage
 from bismuthcore.helpers import BismuthBase
 from tornado.ioloop import IOLoop
 from tornado.iostream import StreamClosedError
@@ -99,6 +100,7 @@ class BismuthNode(BismuthBase):
         if len(self._clients) >= self.config.node_out_limit:
             return
         for peer in [('35.227.90.114', 2829), ('51.15.97.143', 2829), ('163.172.163.4', 2829), ('94.113.207.67', 2829)]:
+            # TODO: take from file ofc
             ip, port = peer
             if ip not in self._clients:
                 io_loop = IOLoop.current()
@@ -108,12 +110,35 @@ class BismuthNode(BismuthBase):
         """Background co-routine handling outgoing connections to peers"""
         if ip in self._clients:
             return  # safety
+        """
+        dict_ip = {'ip': ip}
+        self.plugin_manager.execute_filter_hook('peer_ip', dict_ip)
+        if self.peers.is_banned(ip) or dict_ip['ip'] == 'banned':
+            self.app_log.warning(f"IP {ip} is banned, won't connect")
+            return
+        """
         if 'connections' in self.config.log_components:
             self.app_log.info(f"Trying to reach out to {ip}:{port}.")
         try:
-            client = await self._com_backend.get_client(ip, port)
-            # TODO: extend client object to store all what needed, use key => client
-            self._clients[ip] = {'client' :client}
+            self._clients[ip] = {'client': None}
+            # TODO: possible to have a different backend depending on the port?
+            client = await self._com_backend.get_client(ip, str(port))
+            if not client.connected:
+                return
+            self._clients[ip] = {'client': client}
+            self.app_log.debug(f"Status: Threads at {self.thread_count()}")
+            # TODO: extend client object to store all what needed, use straight key => client
+            # Communication starter
+            message = VersionMessage(self.config.node_version)
+            await client.command(message)
+            self.app_log.debug(f"Sent version {self.config.node_version} to {ip}:{port}, got {message}")
+            # if answer.valid:  # Make command and answer objects with no presupposed transport format
+            if message.valid_answer():
+                print('valid')
+            else:
+                print('invalid')
+                return
+
             while client.connected:
                 if 'connections' in self.config.log_components:
                     self.app_log.info(f"Still connected to {ip}:{port}.")
@@ -122,23 +147,23 @@ class BismuthNode(BismuthBase):
         except StreamClosedError as e:
             if 'connections' in self.config.log_components:
                 self.app_log.warning(f"Lost connection to {ip}:{port} because '{e}'.")
-                exc_type, exc_obj, exc_tb = exc_info()
-                fname = path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                self.app_log.debug(f"client_worker: Type '{exc_type}' fname '{fname}' line {exc_tb.tb_lineno}.")
                 return
             # TODO: add to wait list not to try again too soon
         except Exception as e:
-                self.app_log.warning(f"Lost connection to {ip}:{port} because '{e}'.")
-                exc_type, exc_obj, exc_tb = exc_info()
-                fname = path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                self.app_log.debug(f"client_worker2: Type '{exc_type}' fname '{fname}' line {exc_tb.tb_lineno}.")
-                return
+            # Here, we face a local code issue rather than network error.
+            self.app_log.warning(f"Lost connection to {ip}:{port} because '{e}'.")
+            # TODO: we may factorize that in an helper
+            exc_type, exc_obj, exc_tb = exc_info()
+            fname = path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            self.app_log.debug(f"client_worker: Unexpected '{exc_type}' fname '{fname}' line {exc_tb.tb_lineno}.")
+            return
         finally:
             try:
                 # We could keep it and set to inactive, but is it useful? could grow too much
                 # use a timeout?
                 self._com_backend.close_client(self._clients[ip]['client'])
                 del self._clients[ip]
+                self.app_log.debug("Status: Threads at {} / {}".format(self.thread_count()))
             except:
                 pass
 

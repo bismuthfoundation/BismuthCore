@@ -7,6 +7,7 @@ import json
 import socket
 
 from bismuthcore.combackend import ComBackend, ComClient, Connector
+from bismuthcore.messages.basemessages import Message
 from tornado.ioloop import IOLoop
 # from tornado.options import define, options
 # from tornado import gen
@@ -59,6 +60,16 @@ class TornadoComClient(ComClient):
             return False
         return True
 
+    async def command(self, message: Message) -> bool:
+        if not self.stream_handler:
+            return None
+        data = message.legacy_command
+        param = message.to_legacy()
+        # return await self.stream_handler._command(data, param)
+        message.set_legacy_answer(await self.stream_handler._command(data, param))
+        return True
+
+
 
 class TornadoBackend(ComBackend):
     """Try at a tornado powered backend"""
@@ -68,6 +79,7 @@ class TornadoBackend(ComBackend):
 
     def __init__(self, node, app_log=None, config=None, verbose: bool=False):
         super().__init__(node, app_log, config, verbose)
+
         self.async = True  # Tells whether this backend is async or not (else it would be threaded).
         self.threads = 0  # Improper, these are co-routines.
         self.app_log.info(f"Tornado: Init port {self.port} on address '{self.address}'.")
@@ -103,7 +115,6 @@ class TornadoBackend(ComBackend):
 
     async def get_client(self, host: str, port: int) -> TornadoComClient:
         """ASYNC. Returns a connected ComClient instance, or None if connection wasn't possible"""
-        pass
         self.threads += 1
         client = TornadoComClient(self.config, host, port, app_log=self.app_log)
         await client.connect()

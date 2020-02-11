@@ -160,16 +160,28 @@ def balance_new(db, address: str):
 
 
 @timeit
+def balance_new2(db, address: str):
+    q1 = db.execute(
+        "SELECT (SELECT sum(iamount + ireward) FROM transactions WHERE recipient = ? ) - (SELECT sum(iamount + ifee) FROM transactions WHERE address = ?)",
+        (address, address),
+    )
+    r1 = q1.fetchone()
+    balance = r1[0] if r1[0] else 0
+
+    return Transaction.int_to_f8(balance)
+
+
+@timeit
 def balance_legacy(db, address: str):
     # from essentials.py
     credit_ledger = Decimal(0)
-    q1 = db.execute("SELECT amount, reward FROM transactions WHERE recipient = ?;", (address,))
+    q1 = db.execute("SELECT amount, reward FROM transactions WHERE recipient = ?", (address,))
     entries = q1.fetchall()
     for entry in entries:
         credit_ledger += quantize_eight(entry[0]) + quantize_eight(entry[1])
 
     debit_ledger = Decimal(0)
-    q2 = db.execute("SELECT amount, fee FROM transactions WHERE address = ?;", (address,))
+    q2 = db.execute("SELECT amount, fee FROM transactions WHERE address = ?", (address,))
     entries = q2.fetchall()
     for entry in entries:
         debit_ledger += quantize_eight(entry[0]) + quantize_eight(entry[1])
@@ -191,6 +203,9 @@ if __name__ == "__main__":
     bal_new = balance_new(new_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38")
     # balances can be negative here since we don't have the chain from start.
     print(bal_new)
+    bal_new2 = balance_new2(new_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38")
+    # balances can be negative here since we don't have the chain from start.
+    print(bal_new2)
     # da8a39cc9d880cd55c324afc2f9596c64fac05b8d41b3c9b6c481b4e
     insert_legacy_object(txs)
     legacy_db = insert_legacy(txs)

@@ -29,6 +29,7 @@ class Transaction:
     """A generic Bismuth Transaction"""
 
     # Inner storage is compact, binary form
+
     __slots__ = ('block_height', 'timestamp', 'sender', 'recipient', 'amount', 'signature', 'public_key',
                  'block_hash', 'fee', 'reward', 'operation', 'openfield')
 

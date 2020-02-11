@@ -95,7 +95,7 @@ def insert_new(txs):
         # Creates instance from tuple data, copy to inner properties
         tx = Transaction.from_legacy(tx)
         # Then converts to bin and into bin tuple
-        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_bin_tuple())
+        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_bin_tuple(sqlite_encode=True))
     return test_new
 
 

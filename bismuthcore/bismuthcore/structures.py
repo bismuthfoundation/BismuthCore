@@ -5,9 +5,10 @@ Bismuth core structures
 import json
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from base64 import b64decode, b64encode
+from sqlite3 import Binary
 from Cryptodome.Hash import SHA
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -213,7 +214,7 @@ class Transaction:
         return (self.block_height, self.timestamp, self.sender, self.recipient, amount, signature, public_key, block_hash,
                 fee, reward, self.operation, self.openfield)
 
-    def to_bin_tuple(self):
+    def to_bin_tuple(self, sqlite_encode=False):
         """
         The transaction object as a bin tuple in the following order:
         'block_height', 'timestamp', 'sender', 'recipient', 'amount', 'signature', 'public_key', 'block_hash',
@@ -221,6 +222,11 @@ class Transaction:
 
         Bin format means amounts will be integers, and all content unencoded.
         """
+        if sqlite_encode:
+            # sqlite needs .binary() to encode blobs
+            return (self.block_height, self.timestamp, self.sender, self.recipient, self.amount, Binary(self.signature),
+                    Binary(self.public_key), Binary(self.block_hash), self.fee, self.reward, self.operation, self.openfield)
+
         return (self.block_height, self.timestamp, self.sender, self.recipient, self.amount, self.signature,
                 self.public_key, self.block_hash, self.fee, self.reward, self.operation, self.openfield)
 

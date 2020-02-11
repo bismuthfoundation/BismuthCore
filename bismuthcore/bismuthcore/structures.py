@@ -7,7 +7,7 @@ from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from base64 import b64decode, b64encode
 from Cryptodome.Hash import SHA
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -32,7 +32,7 @@ class Transaction:
     __slots__ = ('block_height', 'timestamp', 'sender', 'recipient', 'amount', 'signature', 'public_key',
                  'block_hash', 'fee', 'reward', 'operation', 'openfield')
 
-    def __init__(self, block_height: int=0, timestamp: float=0, sender: bytes=b'', recipient: bytes=b'',
+    def __init__(self, block_height: int=0, timestamp: float=0, sender: str='', recipient: str='',
                  amount: int=0, signature: bytes=b'', public_key: bytes=b'', block_hash: bytes=b'', fee: int=0,
                  reward: int=0, operation: str='', openfield: str=''):
         """Default constructor with binary, non verbose, parameters"""
@@ -82,10 +82,7 @@ class Transaction:
         bin_signature = b64decode(signature)
         # whereas block hash only is hex encoded.
         bin_block_hash = bytes.fromhex(block_hash)
-        # As well as sender and recipient
-        bin_sender = bytes.fromhex(sender)
-        bin_recipient = bytes.fromhex(recipient)
-        return cls(block_height, timestamp, bin_sender, bin_recipient, int_amount, bin_signature, bin_public_key,
+        return cls(block_height, timestamp, sender, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield)
 
     @classmethod
@@ -105,9 +102,7 @@ class Transaction:
         bin_public_key = b64decode(public_key)
         bin_signature = b64decode(signature)
         bin_block_hash = bytes.fromhex(block_hash)
-        bin_sender = bytes.fromhex(sender)
-        bin_recipient = bytes.fromhex(recipient)
-        return cls(block_height, timestamp, bin_sender, bin_recipient, int_amount, bin_signature, bin_public_key,
+        return cls(block_height, timestamp, sender, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield)
 
     @classmethod
@@ -186,9 +181,7 @@ class Transaction:
             public_key = b64encode(self.public_key).decode('utf-8')
             signature = b64encode(self.signature).decode('utf-8')
             block_hash = self.block_hash.hex()
-            sender = self.sender.hex()
-            recipient = self.recipient.hex()
-            return dict(zip(TRANSACTION_KEYS, (self.block_height, self.timestamp, sender, recipient, amount,
+            return dict(zip(TRANSACTION_KEYS, (self.block_height, self.timestamp, self.sender, self.recipient, amount,
                                                signature, public_key, block_hash, fee, reward,
                                                self.operation, self.openfield, 'Legacy')))
 
@@ -216,9 +209,7 @@ class Transaction:
         public_key = b64encode(self.public_key).decode('utf-8')
         signature = b64encode(self.signature).decode('utf-8')
         block_hash = self.block_hash.hex()
-        sender = self.sender.hex()
-        recipient = self.recipient.hex()
-        return (self.block_height, self.timestamp, sender, recipient, amount, signature, public_key, block_hash,
+        return (self.block_height, self.timestamp, self.sender, self.recipient, amount, signature, public_key, block_hash,
                 fee, reward, self.operation, self.openfield)
 
     def to_bin_tuple(self):
@@ -252,8 +243,8 @@ class Transaction:
         """A hash of all the inner properties, used for test purposes atm"""
         check = SHA.new(bytes(self.block_height))
         check.update(str(self.timestamp).encode('utf-8'))
-        check.update(self.sender)
-        check.update(self.recipient)
+        check.update(self.sender.encode('utf-8'))
+        check.update(self.recipient.encode('utf-8'))
         check.update(bytes(self.amount))
         check.update(self.signature)
         check.update(self.public_key)

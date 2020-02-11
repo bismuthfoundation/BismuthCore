@@ -8,14 +8,14 @@ import random
 import sys
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 
-sys.path.append('../bismuthcore')
-from structures import Transaction
+sys.path.append('../')
+from bismuthcore.structures import Transaction
 
 getcontext().rounding = ROUND_HALF_EVEN
 
 # A Test transaction
 TX = Transaction.from_legacy_params(block_height=1, timestamp=0.01,
-                                    sender='ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFAB',
+                                    sender='ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab',
                                     recipient='01234567890123456789012345678901234567890123456789012345',
                                     amount='0.01000000',
                                     signature='0ABCDEF0', public_key='00112233',
@@ -43,14 +43,14 @@ def test_convert_amount():
 def test_checksum(verbose=False):
     if verbose:
         print(TX.checksum)
-    assert TX.checksum == b'}\x143\x11l\xa6\xa2\xc0r\x03\x8b\xdf\xf2$\xba\xe9\xb6\xe1\xc3I'
+    assert TX.checksum == b'{\xa4PB\xea\xfa\x98\x96\x84\x13cE\tJ\x9e\xf7=\xd4G$'
 
 
 def test_to_tuple(verbose=False):
     """Legacy export format"""
     if verbose:
         print(TX.to_tuple())
-    assert TX.to_tuple() == (1, 0.01, 'abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefab',
+    assert TX.to_tuple() == (1, 0.01, 'ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab',
                            '01234567890123456789012345678901234567890123456789012345',
                            '0.01000000',
                            '0ABCDEF0', '00112233',
@@ -64,7 +64,7 @@ def test_to_json(verbose=False):
     if verbose:
         print(TX.to_json())
     assert TX.to_json() == '{"block_height": 1, "timestamp": 0.01, ' \
-                           '"sender": "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefab", ' \
+                           '"sender": "ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab", ' \
                            '"recipient": "01234567890123456789012345678901234567890123456789012345", ' \
                            '"amount": "0.01000000", ' \
                            '"signature": "0ABCDEF0", "public_key": "00112233", ' \
@@ -78,8 +78,8 @@ def test_to_dict_bin(verbose=False):
     if verbose:
         print(TX.to_dict(legacy=False))
         assert TX.to_dict(legacy=False) == {'block_height': 1, 'timestamp': 0.01,
-                                           'sender': b'\xab\xcd\xef\xab\xcd\xef\xab\xcd\xef\xab\xcd\xef\xab\xcd\xef\xab\xcd\xef\xab\xcd\xef\xab\xcd\xef\xab\xcd\xef\xab',
-                                           'recipient': b'\x01#Eg\x89\x01#Eg\x89\x01#Eg\x89\x01#Eg\x89\x01#Eg\x89\x01#E',
+                                           'sender': "ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab",
+                                           'recipient': "01234567890123456789012345678901234567890123456789012345",
                                            'amount': '0.01000000',
                                            'signature': b'\xd0\x00B\x0cAt', 'public_key': b'\xd3Mu\xdbm\xf7',
                                            'block_hash': b'\x01#Eg\x89\xab\xcd\xef\x01#Eg\x89\xab\xcd\xef\x01#Eg\x89\xab\xcd\xef\x01#Eg',

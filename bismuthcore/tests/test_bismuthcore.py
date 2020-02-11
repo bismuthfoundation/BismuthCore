@@ -6,8 +6,8 @@
 import pytest
 import sys
 
-sys.path.append('../bismuthcore')
-from bismuthcore import BismuthNode
+sys.path.append('../')
+from bismuthcore.bismuthcore import BismuthNode
 
 # TODO
 

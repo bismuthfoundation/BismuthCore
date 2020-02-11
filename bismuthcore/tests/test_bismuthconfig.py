@@ -6,8 +6,9 @@
 import pytest
 import sys
 
-sys.path.append('../bismuthcore')
-from bismuthconfig import BismuthConfig
+sys.path.append('../')
+# from bismuthcore.clientcommands import ClientCommands
+from bismuthcore.bismuthconfig import BismuthConfig
 
 
 def test_create():

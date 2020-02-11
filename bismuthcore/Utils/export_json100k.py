@@ -9,8 +9,8 @@ import sqlite3
 import sys
 from os import remove
 
-sys.path.append('../bismuthcore')
-from structures import Transaction
+sys.path.append('../')
+from bismuthcore.structures import Transaction
 
 
 if __name__ == "__main__":

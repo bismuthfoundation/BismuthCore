@@ -8,8 +8,8 @@ import sqlite3
 import sys
 from os import remove
 
-sys.path.append('../bismuthcore')
-from structures import Transaction
+sys.path.append('../')
+from bismuthcore.structures import Transaction
 
 SQL_CREATE = ('''
               CREATE TABLE "misc" (
@@ -19,8 +19,8 @@ SQL_CREATE = ('''
               '''CREATE TABLE "transactions" (
                   `block_height`	INTEGER,
                   `timestamp`	NUMERIC,
-                  `address`	BLOB(28),
-                  `recipient`	BLOB(28),
+                  `address`	TEXT,
+                  `recipient`	TEXT,
                   `amount`	INTEGER,
                   `signature`	BLOB,
                   `public_key`	BLOB,

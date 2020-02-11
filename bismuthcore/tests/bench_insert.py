@@ -8,9 +8,9 @@ import json
 from time import time
 from os import remove
 
-sys.path.append('../bismuthcore')
-from structures import Transaction
-from decorators import timeit
+sys.path.append('../')
+from bismuthcore.structures import Transaction
+from bismuthcore.decorators import timeit
 
 SQL_CREATE = ('''
               CREATE TABLE "misc" (
@@ -109,7 +109,7 @@ def bench_legacy_object(txs):
     test_new = sqlite3.connect('file:ledger_legacy?mode=memory', uri=True, timeout=1)
     create(test_new, SQL_CREATE_LEGACY)
     for tx in txs:
-        # Creates instance from tuple data, copy to inner properties
+        # Creates instance from tuple data, copy to inner properties (converts to binary as well)
         tx = Transaction.from_legacy(tx)
         # Then export again
         test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_tuple())

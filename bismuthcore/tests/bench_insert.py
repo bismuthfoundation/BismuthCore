@@ -13,6 +13,7 @@ sys.path.append('../')
 from bismuthcore.structures import Transaction
 from bismuthcore.decorators import timeit
 from bismuthcore.compat import quantize_eight
+from bismuthcore.helpers import native_tx_to_bin_sqlite, TxConverter
 
 SQL_CREATE = ('''
               CREATE TABLE "misc" (
@@ -100,6 +101,26 @@ def insert_new(txs):
 
 
 @timeit
+def insert_new_function(txs):
+    """ Uses a call to a function helper"""
+    test_new = sqlite3.connect('file:ledger_new_function?mode=memory', uri=True, timeout=1)
+    create(test_new, SQL_CREATE)
+    for tx in txs:
+        # converts into bin tuple - just conversion, no object created, no stored property.
+        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", native_tx_to_bin_sqlite(tx))
+    return test_new
+
+@timeit
+def insert_new_class(txs):
+    """ Uses a call to a function helper"""
+    test_new = sqlite3.connect('file:ledger_new_class?mode=memory', uri=True, timeout=1)
+    create(test_new, SQL_CREATE)
+    for tx in txs:
+        # converts into bin tuple - just conversion, no object created, no stored property.
+        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", TxConverter.native_tx_to_bin_sqlite(tx))
+    return test_new
+
+@timeit
 def insert_legacy(txs):
     test_legacy = sqlite3.connect('file:ledger_legacy?mode=memory', uri=True, timeout=1)
     create(test_legacy, SQL_CREATE_LEGACY)
@@ -165,6 +186,8 @@ if __name__ == "__main__":
             txs.append(json.loads(raw))
     print("Bench {} txs".format(len(txs)))
     new_db = insert_new(txs)
+    insert_new_function(txs)
+    insert_new_class(txs)
     bal_new = balance_new(new_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38")
     # balances can be negative here since we don't have the chain from start.
     print(bal_new)

@@ -4,6 +4,7 @@ Tx insert benchmark
 
 import sqlite3
 import sys
+import json
 from time import time
 from os import remove
 
@@ -82,31 +83,55 @@ def create(db, sql: tuple):
         db.execute(line)
     db.commit()
 
+
 @timeit
-def bench_new():
-    test_new = sqlite3.connect('file:ledger_new?mode=memory', timeout=1)
+def bench_new(txs):
+    # Using inram DB to avoid disk I/O artefacts
+    test_new = sqlite3.connect('file:ledger_new?mode=memory', uri=True, timeout=1)
     create(test_new, SQL_CREATE)
+    for tx in txs:
+        # Creates instance from tuple data, copy to inner properties
+        tx = Transaction.from_legacy(tx)
+        # Then converts to bin and into bin tuple
+        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_bin_tuple())
+
+
+@timeit
+def bench_legacy(txs):
+    test_new = sqlite3.connect('file:ledger_legacy?mode=memory', uri=True, timeout=1)
+    create(test_new, SQL_CREATE_LEGACY)
+    for tx in txs:
+        # Directly insert tuple without any conversion to db
+        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx)
+
+@timeit
+def bench_legacy_object(txs):
+    test_new = sqlite3.connect('file:ledger_legacy?mode=memory', uri=True, timeout=1)
+    create(test_new, SQL_CREATE_LEGACY)
+    for tx in txs:
+        # Creates instance from tuple data, copy to inner properties
+        tx = Transaction.from_legacy(tx)
+        # Then export again
+        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_tuple())
 
 
 if __name__ == "__main__":
 
-    bench_new()
+    # read data
+    txs=[]
+    with open("../Utils/tx_tuple_dataset.json") as f:
+        for raw in f:
+            txs.append(json.loads(raw))
+    print("Bench {} txs".format(len(txs)))
+    bench_new(txs)
 
-    """
+    bench_legacy(txs)
 
-    test_legacy = sqlite3.connect('file:ledger_legacy?mode=memory', timeout=1)
-    create(test_legacy, SQL_CREATE_LEGACY)
+    bench_legacy_object(txs)
 
-    with sqlite3.connect('../../../Bismuth-temp/static/ledger.db', timeout=1) as ledger:
-        ledger.text_factory = str
-        res = ledger.execute("select * from transactions where block_height > 700000 limit 100000")
-        for row in res:
-            tx = Transaction.from_legacy(row)
-            test_legacy.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", row)
-            tx.public_key = b''
-            test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_bin_tuple())
-    test_new.commit()
-    test_new.close()
-    test_legacy.commit()
-    test_legacy.close()
-    """
+"""
+Bench 100000 txs
+bench_new  7.203981 s
+bench_legacy  4.797854 s
+bench_legacy_object  8.732996 s
+"""

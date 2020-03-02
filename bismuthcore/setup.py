@@ -11,7 +11,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['pycryptodomex', 'Tornado', 'ConcurrentLogHandler']
+requirements = ['polysign>=0.1.0', 'Tornado', 'ConcurrentLogHandler']
 
 setup_requirements = ['pytest-runner', ]
 
@@ -40,7 +40,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/eggpool/bismuthcore',
-    version='0.0.2',
+    url='https://github.com/bismuthfoundation/bismuthcore',
+    version='0.0.3',
     zip_safe=False,
 )

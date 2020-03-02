@@ -9,7 +9,7 @@ import sys
 from os import remove
 
 sys.path.append('../')
-from bismuthcore.structures import Transaction
+from bismuthcore.transaction import Transaction
 
 SQL_CREATE = ('''
               CREATE TABLE "misc" (

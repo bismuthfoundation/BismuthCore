@@ -1,5 +1,5 @@
 """
-Bismuth core structures
+Bismuth core transaction structure
 """
 
 import json
@@ -261,21 +261,4 @@ class Transaction:
         check.update(self.operation.encode('utf-8'))
         check.update(self.openfield.encode('utf-8'))
         return check.digest()
-
-
-"""
-Block
-"""
-
-
-class Block:
-    """A generic Bismuth Block with its transactions"""
-
-    # Inner storage is compact, binary form
-    __slots__ = ('transactions', )
-
-    def __init__(self, transactions):
-        """Default constructor with list of binary, non verbose, transactions, mining transaction at the end."""
-        self.transactions = transactions
-
 

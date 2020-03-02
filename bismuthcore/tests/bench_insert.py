@@ -10,7 +10,7 @@ from os import remove
 from decimal import Decimal
 
 sys.path.append('../')
-from bismuthcore.structures import Transaction
+from bismuthcore.transaction import Transaction
 from bismuthcore.decorators import timeit
 from bismuthcore.compat import quantize_eight
 from bismuthcore.helpers import native_tx_to_bin_sqlite, TxConverter

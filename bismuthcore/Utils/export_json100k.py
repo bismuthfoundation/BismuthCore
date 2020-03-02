@@ -10,7 +10,7 @@ import sys
 from os import remove
 
 sys.path.append('../')
-from bismuthcore.structures import Transaction
+from bismuthcore.transaction import Transaction
 
 
 if __name__ == "__main__":

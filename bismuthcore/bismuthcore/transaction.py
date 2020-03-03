@@ -8,7 +8,7 @@ from base64 import b64decode, b64encode
 from sqlite3 import Binary
 from Cryptodome.Hash import SHA
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -167,7 +167,7 @@ class Transaction:
     Exporters
     """
 
-    def to_dict(self, legacy=False):
+    def to_dict(self, legacy: bool=False, decode_pubkey: bool=False):
         """
         The transaction object as a Python dict with keys
         'block_height', 'timestamp', 'address', 'recipient', 'amount', 'signature', 'public_key',
@@ -175,12 +175,19 @@ class Transaction:
         'format'
 
         format will be either 'Legacy' or 'Bin'
+        decode_pubkey is used to keep compatibility with essentials.format_raw_tx, that was trying to decode pubkey
+        Only checkled if legacy.
         """
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
         if legacy:
             public_key = b64encode(self.public_key).decode('utf-8')
+            if decode_pubkey:
+                try:
+                    public_key = b64decode(public_key).decode('utf-8')
+                except:
+                    pass  # support new pubkey schemes
             signature = b64encode(self.signature).decode('utf-8')
             block_hash = self.block_hash.hex()
             return dict(zip(TRANSACTION_KEYS, (self.block_height, self.timestamp, self.address, self.recipient, amount,

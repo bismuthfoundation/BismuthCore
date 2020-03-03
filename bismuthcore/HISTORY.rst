@@ -2,6 +2,11 @@
 History
 =======
 
+0.0.4 (2020-02-3)
+------------------
+
+* Renamed "sender" key to "address" in order to keep legacy naming
+
 0.0.3 (2020-02-2)
 ------------------
 

@@ -15,7 +15,7 @@ getcontext().rounding = ROUND_HALF_EVEN
 
 # A Test transaction
 TX = Transaction.from_legacy_params(block_height=1, timestamp=0.01,
-                                    sender='ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab',
+                                    address='ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab',
                                     recipient='01234567890123456789012345678901234567890123456789012345',
                                     amount='0.01000000',
                                     signature='0ABCDEF0', public_key='00112233',
@@ -64,7 +64,7 @@ def test_to_json(verbose=False):
     if verbose:
         print(TX.to_json())
     assert TX.to_json() == '{"block_height": 1, "timestamp": 0.01, ' \
-                           '"sender": "ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab", ' \
+                           '"address": "ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab", ' \
                            '"recipient": "01234567890123456789012345678901234567890123456789012345", ' \
                            '"amount": "0.01000000", ' \
                            '"signature": "0ABCDEF0", "public_key": "00112233", ' \
@@ -78,7 +78,7 @@ def test_to_dict_bin(verbose=False):
     if verbose:
         print(TX.to_dict(legacy=False))
         assert TX.to_dict(legacy=False) == {'block_height': 1, 'timestamp': 0.01,
-                                           'sender': "ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab",
+                                           'address': "ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFab",
                                            'recipient': "01234567890123456789012345678901234567890123456789012345",
                                            'amount': '0.01000000',
                                            'signature': b'\xd0\x00B\x0cAt', 'public_key': b'\xd3Mu\xdbm\xf7',

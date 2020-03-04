@@ -3,12 +3,14 @@ Helper Class and functions
 """
 
 import logging
+import requests
 from abc import ABC, abstractmethod
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from sqlite3 import Binary
 from base64 import b64decode, b64encode
+from bismuthcore.compat import quantize_eight
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
 def base_app_log(app_log=None):
@@ -46,6 +48,50 @@ class Commands(ABC):
     @abstractmethod
     def process_legacy(self, command):
         pass
+
+
+"""
+Migrated from essentials
+"""
+
+
+def fee_calculate(openfield: str, operation: str='', block: int=0) -> Decimal:
+    # block var is no more needed, kepts for interface retro compatibility
+    fee = Decimal("0.01") + (Decimal(len(openfield)) / Decimal("100000"))  # 0.01 dust
+    if operation == "token:issue":
+        fee = Decimal(fee) + Decimal("10")
+    if openfield.startswith("alias="):
+        fee = Decimal(fee) + Decimal("1")
+    if operation == "alias:register":  # Take fee into account even if the protocol is not live yet.
+        fee = Decimal(fee) + Decimal("1")
+    return quantize_eight(fee)
+
+
+def download_file(url: str, filename: str) -> None:
+    """Download a file from URL to filename
+
+    :param url: URL to download file from
+    :param filename: Filename to save downloaded data as
+
+    returns `filename`
+    """
+    try:
+        r = requests.get(url, stream=True)
+        total_size = int(r.headers.get('content-length')) / 1024
+
+        with open(filename, 'wb') as fp:
+            chunkno = 0
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    chunkno = chunkno + 1
+                    if chunkno % 10000 == 0:  # every x chunks
+                        print(f"Downloaded {int(100 * (chunkno / total_size))} %")
+
+                    fp.write(chunk)
+                    fp.flush()
+            print("Downloaded 100 %")
+    except:
+        raise
 
 
 """

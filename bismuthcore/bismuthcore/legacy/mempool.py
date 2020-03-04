@@ -12,18 +12,21 @@ import sys
 import threading
 import time
 
-# from decimal import *
+# TODO: use polysign instead
 from Cryptodome.Hash import SHA
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import PKCS1_v1_5
 
 import essentials
-from quantizer import *
+from bismuthcore.compat import quantize_two, quantize_eight
+from bismuthcore.helpers import fee_calculate
 # import json
 
-__version__ = "0.0.5e"
+__version__ = "0.0.5f"
 
+# NOTE: Old version archived for comparison, not to be used.
 """
+0.0.5f - use bismuthcore 1/n
 0.0.5e - add mergedts timestamp to tx for better handling of late txs
          quicker unfreeze
          less strict freezing
@@ -586,7 +589,7 @@ class Mempool:
                         if result:
                             for x in result:
                                 debit_tx = quantize_eight(x[0])
-                                fee = quantize_eight(essentials.fee_calculate(x[1], x[2], last_block))
+                                fee = fee_calculate(x[1], x[2], last_block)
                                 debit_mempool = quantize_eight(debit_mempool + debit_tx + fee)
 
                         credit = 0
@@ -617,7 +620,7 @@ class Mempool:
                         balance = quantize_eight(credit - debit - fees + rewards - quantize_eight(mempool_amount))
                         balance_pre = quantize_eight(credit - debit_ledger - fees + rewards)
 
-                        fee = essentials.fee_calculate(mempool_openfield, mempool_operation, last_block)
+                        fee = fee_calculate(mempool_openfield, mempool_operation, last_block)
 
                         if quantize_eight(mempool_amount) > quantize_eight(balance_pre): #mp amount is already included in "balance" var! also, that tx might already be in the mempool
                             mempool_result.append("Mempool: Sending more than owned")

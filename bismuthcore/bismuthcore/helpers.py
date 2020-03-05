@@ -56,7 +56,7 @@ Migrated from essentials
 
 
 def fee_calculate(openfield: str, operation: str='', block: int=0) -> Decimal:
-    # block var is no more needed, kepts for interface retro compatibility
+    # block var is no more needed, kept for interface retro compatibility
     fee = Decimal("0.01") + (Decimal(len(openfield)) / Decimal("100000"))  # 0.01 dust
     if operation == "token:issue":
         fee = Decimal(fee) + Decimal("10")
@@ -92,6 +92,17 @@ def download_file(url: str, filename: str) -> None:
             print("Downloaded 100 %")
     except:
         raise
+
+
+"""
+User input sanitization
+"""
+
+
+def sanitize_address(address: str) -> str:
+    # Could use polysign to further check if it's valid. not sure it(s worth it at this stage.
+    # There, it's to avoid easy exploits, not fully validate.
+    return str(address)[:56]
 
 
 """

@@ -64,6 +64,10 @@ class Transaction:
         self.operation = self.operation[:30]
         self.openfield = self.openfield[:100000]
 
+    def validate(self):
+        """TODO: Placeholder for full tx validation. supposed to raise on error"""
+        raise RuntimeError("TODO")
+
     @staticmethod
     def int_to_f8(an_int: int):
         """Helper function to convert an int amount - inner format - to legacy string 0.8f """

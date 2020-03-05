@@ -2,6 +2,12 @@
 History
 =======
 
+0.0.6 (2020-02-5)
+------------------
+
+* Handling of mirror blocks (no sig nor pubkey)
+* Default sanitization of tx data
+
 0.0.5 (2020-02-4)
 ------------------
 

@@ -8,7 +8,7 @@ from base64 import b64decode, b64encode
 from sqlite3 import Binary
 from Cryptodome.Hash import SHA
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -79,9 +79,9 @@ class Transaction:
         # public_key is double b64 encoded in legacy format.
         # Could win even more storing the public_key decoded once more, but may generate more overhead at decode
         # Postponed, since pubkeys do not need to be stored for every address every time
-        bin_public_key = b64decode(public_key)
+        bin_public_key = b64decode(public_key) if public_key else b""
         # signature is b64 encoded in legacy format.
-        bin_signature = b64decode(signature)
+        bin_signature = b64decode(signature) if signature else b""
         # whereas block hash only is hex encoded.
         bin_block_hash = bytes.fromhex(block_hash)
         return cls(block_height, timestamp, sender, recipient, int_amount, bin_signature, bin_public_key,
@@ -101,8 +101,8 @@ class Transaction:
         int_amount = Transaction.f8_to_int(amount)
         int_fee = Transaction.f8_to_int(fee)
         int_reward = Transaction.f8_to_int(reward)
-        bin_public_key = b64decode(public_key)
-        bin_signature = b64decode(signature)
+        bin_public_key = b64decode(public_key) if public_key else b""
+        bin_signature = b64decode(signature) if signature else b""
         bin_block_hash = bytes.fromhex(block_hash)
         return cls(block_height, timestamp, sender, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield)
@@ -149,7 +149,7 @@ class Transaction:
         payload['address'] = bytes.fromhex(payload['address'])
         payload['recipient'] = bytes.fromhex(payload['recipient'])
 
-        bin_signature = b64decode(payload['signature'])
+        bin_signature = b64decode(payload['signature']) if payload['signature'] else b""
         bin_block_hash = bytes.fromhex(payload['block_hash'])
 
         if payload['public_key'].beginsWith('-----BEGIN PUBLIC KEY-----'):
@@ -158,7 +158,7 @@ class Transaction:
                        int_fee, int_reward, payload['operation'], payload['openfield'])
         else:
             # We got legacy encoded strings, convert to bin
-            bin_public_key = b64decode(payload['public_key'])
+            bin_public_key = b64decode(payload['public_key']) if payload['public_key'] else b""
             return cls(payload['block_height'], payload['timestamp'], payload['address'], payload['recipient'],
                        int_amount, bin_signature, bin_public_key, bin_block_hash, int_fee, int_reward,
                        payload['operation'], payload['openfield'])
@@ -176,19 +176,22 @@ class Transaction:
 
         format will be either 'Legacy' or 'Bin'
         decode_pubkey is used to keep compatibility with essentials.format_raw_tx, that was trying to decode pubkey
-        Only checkled if legacy.
+        Only checked if legacy.
         """
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
         if legacy:
-            public_key = b64encode(self.public_key).decode('utf-8')
-            if decode_pubkey:
-                try:
-                    public_key = b64decode(public_key).decode('utf-8')
-                except:
-                    pass  # support new pubkey schemes
-            signature = b64encode(self.signature).decode('utf-8')
+            if self.public_key == b"":
+                public_key = ""  # Properly returns empty values
+            else:
+                public_key = b64encode(self.public_key).decode('utf-8')
+                if decode_pubkey:
+                    try:
+                        public_key = b64decode(public_key).decode('utf-8')
+                    except:
+                        pass  # support new pubkey schemes
+            signature = b64encode(self.signature).decode('utf-8') if self.signature else ''  # Properly returns empty values
             block_hash = self.block_hash.hex()
             return dict(zip(TRANSACTION_KEYS, (self.block_height, self.timestamp, self.address, self.recipient, amount,
                                                signature, public_key, block_hash, fee, reward,
@@ -215,8 +218,8 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
-        public_key = b64encode(self.public_key).decode('utf-8')
-        signature = b64encode(self.signature).decode('utf-8')
+        public_key = b64encode(self.public_key).decode('utf-8') if self.public_key else ""
+        signature = b64encode(self.signature).decode('utf-8') if self.signature else ""
         block_hash = self.block_hash.hex()
         return (self.block_height, self.timestamp, self.address, self.recipient, amount, signature, public_key, block_hash,
                 fee, reward, self.operation, self.openfield)

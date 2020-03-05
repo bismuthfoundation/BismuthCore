@@ -8,7 +8,7 @@ from base64 import b64decode, b64encode
 from sqlite3 import Binary
 from Cryptodome.Hash import SHA
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -36,7 +36,7 @@ class Transaction:
 
     def __init__(self, block_height: int=0, timestamp: float=0, address: str='', recipient: str='',
                  amount: int=0, signature: bytes=b'', public_key: bytes=b'', block_hash: bytes=b'', fee: int=0,
-                 reward: int=0, operation: str='', openfield: str=''):
+                 reward: int=0, operation: str='', openfield: str='', sanitize: bool=True):
         """Default constructor with binary, non verbose, parameters"""
         self.block_height = block_height
         self.timestamp = timestamp
@@ -50,6 +50,19 @@ class Transaction:
         self.reward = reward
         self.operation = operation
         self.openfield = openfield
+        if sanitize:
+            self._sanitize()
+
+    def _sanitize(self):
+        """To be called on user or network provided data. Makes sure the field size are ok
+        Triggered by "sanitize=True" default param.
+        """
+        self.address = self.address[:56]
+        self.recipient = self.recipient[:56]
+        # Signature len is not checked here, since its len depends on the input format.
+        # As is pubkey
+        self.operation = self.operation[:30]
+        self.openfield = self.openfield[:100000]
 
     @staticmethod
     def int_to_f8(an_int: int):
@@ -79,19 +92,23 @@ class Transaction:
         # public_key is double b64 encoded in legacy format.
         # Could win even more storing the public_key decoded once more, but may generate more overhead at decode
         # Postponed, since pubkeys do not need to be stored for every address every time
-        bin_public_key = b64decode(public_key) if public_key else b""
+        bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
         # signature is b64 encoded in legacy format.
-        bin_signature = b64decode(signature) if signature else b""
+        bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
+        # empty pubkey and signatures are stored as "0" and not "", why the len() > 1
         # whereas block hash only is hex encoded.
         bin_block_hash = bytes.fromhex(block_hash)
+        #
         return cls(block_height, timestamp, sender, recipient, int_amount, bin_signature, bin_public_key,
-                   bin_block_hash, int_fee, int_reward, operation, openfield)
+                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True)
 
     @classmethod
-    def from_legacy(cls, tx: list):
+    def from_legacy(cls, tx: list, sanitize=True):
         """
         Create from legacy - verbose - parameters.
         Call as tx = Transaction.from_legacy(tx_list)
+        If sanitize is False, then no check on fields len will take place.
+        sanitize false is use for db reading, where data already has been sanitized at write time.
         """
         if len(tx) == 11:
             # legacy tx list can omit the blockheight (like for mempool)
@@ -101,11 +118,11 @@ class Transaction:
         int_amount = Transaction.f8_to_int(amount)
         int_fee = Transaction.f8_to_int(fee)
         int_reward = Transaction.f8_to_int(reward)
-        bin_public_key = b64decode(public_key) if public_key else b""
-        bin_signature = b64decode(signature) if signature else b""
+        bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
+        bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
         bin_block_hash = bytes.fromhex(block_hash)
         return cls(block_height, timestamp, sender, recipient, int_amount, bin_signature, bin_public_key,
-                   bin_block_hash, int_fee, int_reward, operation, openfield)
+                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize)
 
     @classmethod
     def from_protobuf(cls, protobuf):
@@ -118,7 +135,7 @@ class Transaction:
         return cls()
 
     @classmethod
-    def from_json(cls, json_payload: str):
+    def from_json(cls, json_payload: str, sanitize=True):
         """
         Create from json object.
         Call as tx = Transaction.from_json(json_string)
@@ -149,19 +166,19 @@ class Transaction:
         payload['address'] = bytes.fromhex(payload['address'])
         payload['recipient'] = bytes.fromhex(payload['recipient'])
 
-        bin_signature = b64decode(payload['signature']) if payload['signature'] else b""
+        bin_signature = b64decode(payload['signature'][:684]) if len(payload['signature']) > 1 else b""
         bin_block_hash = bytes.fromhex(payload['block_hash'])
 
         if payload['public_key'].beginsWith('-----BEGIN PUBLIC KEY-----'):
             return cls(payload['block_height'], payload['timestamp'], payload['address'], payload['recipient'],
                        int_amount, bin_signature, payload['public_key'], bin_block_hash,
-                       int_fee, int_reward, payload['operation'], payload['openfield'])
+                       int_fee, int_reward, payload['operation'], payload['openfield'], sanitize)
         else:
             # We got legacy encoded strings, convert to bin
-            bin_public_key = b64decode(payload['public_key']) if payload['public_key'] else b""
+            bin_public_key = b64decode(payload['public_key'][:1068]) if len(payload['public_key']) > 1 else b""
             return cls(payload['block_height'], payload['timestamp'], payload['address'], payload['recipient'],
                        int_amount, bin_signature, bin_public_key, bin_block_hash, int_fee, int_reward,
-                       payload['operation'], payload['openfield'])
+                       payload['operation'], payload['openfield'], sanitize)
 
     """
     Exporters

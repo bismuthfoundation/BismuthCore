@@ -8,7 +8,7 @@ from base64 import b64decode, b64encode
 from sqlite3 import Binary
 from Cryptodome.Hash import SHA
 
-__version__ = '0.0.8'
+__version__ = '0.0.9'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -204,7 +204,7 @@ class Transaction:
         reward = Transaction.int_to_f8(self.reward)
         if legacy:
             if self.public_key == b"":
-                public_key = ""  # Properly returns empty values
+                public_key = "0"  # Properly returns empty values, "0" to keep compatibility with legacy
             else:
                 public_key = b64encode(self.public_key).decode('utf-8')
                 if decode_pubkey:
@@ -239,8 +239,9 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
-        public_key = b64encode(self.public_key).decode('utf-8') if self.public_key else ""
-        signature = b64encode(self.signature).decode('utf-8') if self.signature else ""
+        public_key = b64encode(self.public_key).decode('utf-8') if self.public_key else "0"
+        # 0 to keep compatibility with legacy
+        signature = b64encode(self.signature).decode('utf-8') if self.signature else "0"
         block_hash = self.block_hash.hex()
         return (self.block_height, self.timestamp, self.address, self.recipient, amount, signature, public_key, block_hash,
                 fee, reward, self.operation, self.openfield)

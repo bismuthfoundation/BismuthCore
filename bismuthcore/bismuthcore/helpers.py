@@ -67,6 +67,10 @@ def fee_calculate(openfield: str, operation: str='', block: int=0) -> Decimal:
     return quantize_eight(fee)
 
 
+def just_int_from(s):
+    return int(''.join(i for i in s if i.isdigit()))
+
+
 def download_file(url: str, filename: str) -> None:
     """Download a file from URL to filename
 

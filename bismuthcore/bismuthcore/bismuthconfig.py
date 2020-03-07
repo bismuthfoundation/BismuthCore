@@ -1,5 +1,5 @@
 """
-BismuthConfig class, derived from legacy options.py
+BismuthConfig class, derived from legacy config.py
 """
 
 import logging

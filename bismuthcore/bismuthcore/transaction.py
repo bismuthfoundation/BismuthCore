@@ -117,7 +117,7 @@ class Transaction:
         if len(tx) == 11:
             # legacy tx list can omit the blockheight (like for mempool)
             tx.insert(0, 0)
-        block_height, timestamp, sender, recipient, amount, signature, \
+        block_height, timestamp, address, recipient, amount, signature, \
             public_key, block_hash, fee, reward, operation, openfield = tx
         int_amount = Transaction.f8_to_int(amount)
         int_fee = Transaction.f8_to_int(fee)
@@ -125,7 +125,7 @@ class Transaction:
         bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
         bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
         bin_block_hash = bytes.fromhex(block_hash)
-        return cls(block_height, timestamp, sender, recipient, int_amount, bin_signature, bin_public_key,
+        return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield, sanitize)
 
     @classmethod

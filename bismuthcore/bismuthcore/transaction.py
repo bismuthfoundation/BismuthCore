@@ -83,7 +83,7 @@ class Transaction:
     """
 
     @classmethod
-    def from_legacy_params(cls, block_height: int=0, timestamp: float=0, sender: str='', recipient: str='',
+    def from_legacy_params(cls, block_height: int=0, timestamp: float=0, address: str='', recipient: str='',
                            amount: str='0', signature: str = '', public_key: str='', block_hash: str='',
                            fee: str='0', reward: str='0', operation: str='', openfield: str='',):
         """
@@ -103,7 +103,7 @@ class Transaction:
         # whereas block hash only is hex encoded.
         bin_block_hash = bytes.fromhex(block_hash)
         #
-        return cls(block_height, timestamp, sender, recipient, int_amount, bin_signature, bin_public_key,
+        return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True)
 
     @classmethod

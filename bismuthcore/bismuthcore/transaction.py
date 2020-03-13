@@ -235,6 +235,7 @@ class Transaction:
         'fee', 'reward', 'operation', 'openfield'
 
         Legacy format means amounts will be string, 0.8f, and all bin content hex or b64 encoded.
+        no "legacy" flag, as legacy is implied by "tuple" format. Could be renamed to more explicit "legacy_tuple" to avoid any issue.
         """
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)

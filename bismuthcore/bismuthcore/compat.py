@@ -32,3 +32,8 @@ def quantize_ten(value) -> Decimal:
     value = Decimal(value)
     value = value.quantize(DECIMAL_ZERO_10DP)
     return value
+
+
+def bin_convert(string: str):
+    return ''.join(format(ord(x), '8b').replace(' ', '0') for x in string)
+

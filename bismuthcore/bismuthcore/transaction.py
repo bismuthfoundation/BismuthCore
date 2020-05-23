@@ -117,14 +117,29 @@ class Transaction:
         if len(tx) == 11:
             # legacy tx list can omit the blockheight (like for mempool)
             tx.insert(0, 0)
+        # print(tx)
         block_height, timestamp, address, recipient, amount, signature, \
             public_key, block_hash, fee, reward, operation, openfield = tx
+        #print("public_key1", public_key)
+        bin_public_key = b""
+        public_key = public_key.replace("\n-----END PUBLIC KEY-----", "").replace("-----BEGIN PUBLIC KEY-----\n","")
+        """"-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDKvLTbDx85a1ugb/6xMMhVOq6U\n2GeYT8+Iq2z9FwIMR40l2ttGqNK7varNccFLIu8Kn4ogDQs3WSWQCxNkhZh/FqzF\nYYa3/ItPPfzrXqgajwD8q4Zt4Ymjt8+2BkImPjjFNkuTQIz2Iu3yFqOIxLdjMw7n\nUVu9tFPiUkD0VnDPLQIDAQAB\n-----END PUBLIC KEY-----"""
+        #print("public_key2", public_key)
         int_amount = Transaction.f8_to_int(amount)
         int_fee = Transaction.f8_to_int(fee)
         int_reward = Transaction.f8_to_int(reward)
-        bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
+        try:
+            bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
+            #print("bin public_key1", bin_public_key)
+            bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"").replace(b"-----BEGIN PUBLIC KEY-----\n",b"")
+            #print("bin public_key2", bin_public_key)
+            bin_public_key = b64decode(bin_public_key[:1068])
+            #print("bin public_key3", bin_public_key)
+        except:
+            pass
+
         bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
-        bin_block_hash = bytes.fromhex(block_hash)
+        bin_block_hash = bytes.fromhex(block_hash) if len(block_hash) > 1 else b""
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield, sanitize)
 

@@ -26,7 +26,8 @@ class Block:
         :param decode_pubkey:
         :return:
         """
-        # Could be better as tuple, but may constraint higher level usage (may need to add something to the list) - to be checked later on
+        # Could be better as tuple, but may constraint higher level usage
+        # (may need to add something to the list) - to be checked later on
         return [transaction.to_dict(legacy=legacy, decode_pubkey=decode_pubkey) for transaction in self.transactions]
 
     def to_listoftuples(self) -> list:

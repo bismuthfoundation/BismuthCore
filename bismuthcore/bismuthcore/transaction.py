@@ -117,7 +117,7 @@ class Transaction:
         :return:
         """
         fee = 0  # will be recalc
-        return cls.from_legacy((0, tx[1], tx[2], tx[3], tx[4], tx[5], b'', fee, 0, tx[6], tx[7]), sanitize=sanitize)
+        return cls.from_legacy([0, tx[1], tx[2], tx[3], tx[4], tx[5], b'', fee, 0, tx[6], tx[7]], sanitize=sanitize)
 
     @classmethod
     def from_legacy(cls, tx: list, sanitize=True):

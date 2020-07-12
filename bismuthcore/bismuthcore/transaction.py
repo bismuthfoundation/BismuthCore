@@ -107,6 +107,19 @@ class Transaction:
                    bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True)
 
     @classmethod
+    def from_legacymempool(cls, tx: list, sanitize=False):
+        """
+        mempool has a partial data set.
+        0 timestamp TEXT, 1 address TEXT, 2 recipient TEXT, 3 amount TEXT, 4 signature TEXT, " \
+        5 public_key TEXT, 6 operation TEXT, 7 openfield TEXT, 8 mergedts INTEGER(4) not null default (strftime('%s','now')) )"
+        :param tx:
+        :param sanitize:
+        :return:
+        """
+        fee = 0  # will be recalc
+        return cls.from_legacy((0, tx[1], tx[2], tx[3], tx[4], tx[5], b'', fee, 0, tx[6], tx[7]), sanitize=sanitize)
+
+    @classmethod
     def from_legacy(cls, tx: list, sanitize=True):
         """
         Create from legacy - verbose - parameters.
@@ -120,6 +133,8 @@ class Transaction:
         # print(tx)
         block_height, timestamp, address, recipient, amount, signature, \
             public_key, block_hash, fee, reward, operation, openfield = tx
+        #
+
         #print("public_key1", public_key)
         bin_public_key = b""
         public_key = public_key.replace("\n-----END PUBLIC KEY-----", "").replace("-----BEGIN PUBLIC KEY-----\n","")

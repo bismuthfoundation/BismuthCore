@@ -116,7 +116,7 @@ class Transaction:
         :param sanitize:
         :return:
         """
-        fee = 0  # will be recalc
+        fee = 0  # will be recalc
         return cls.from_legacy([tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], b'', fee, 0, tx[6], tx[7]], sanitize=sanitize)
 
     @classmethod
@@ -155,6 +155,24 @@ class Transaction:
 
         bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
         bin_block_hash = bytes.fromhex(block_hash) if len(block_hash) > 1 else b""
+        return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
+                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize)
+
+    @classmethod
+    def from_v2(cls, tx: list, sanitize=False):
+        """
+        Create from v2 - verbose - tuple/list.
+        Call as tx = Transaction.from_v2(tx_list)
+        If sanitize is False, then no check on fields len will take place.
+        sanitize false is use for db reading, where data already has been sanitized at write time.
+        """
+        if len(tx) == 11:
+            # tx list can omit the blockheight (like for mempool)
+            tx.insert(0, 0)
+        # print(tx)
+        block_height, timestamp, address, recipient, int_amount, bin_signature, \
+        bin_public_key, bin_block_hash, int_fee, int_reward, operation, openfield = tx
+        #
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield, sanitize)
 
@@ -276,6 +294,12 @@ class Transaction:
         block_hash = self.block_hash.hex()
         return (self.block_height, self.timestamp, self.address, self.recipient, amount, signature, public_key, block_hash,
                 fee, reward, self.operation, self.openfield)
+
+    def to_buffer_for_signing(self):
+        """Builds buffer to sign from core properties"""
+        buffer = str((f"{self.timestamp:.2f}", self.address, self.recipient, Transaction.int_to_f8(self.amount),
+                      self.operation, self.openfield)).encode("utf-8")
+        return buffer
 
     def to_bin_tuple(self, sqlite_encode=False):
         """

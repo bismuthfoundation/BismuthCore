@@ -3,7 +3,7 @@ History
 =======
 
 0.0.10 (2020-05-23)
-------------------
+-------------------
 
 * Fix to Transaction, support for V2 chain. Partial update, not fully tested.
 

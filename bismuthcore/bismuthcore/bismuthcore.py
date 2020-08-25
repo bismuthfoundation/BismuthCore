@@ -85,7 +85,7 @@ class BismuthNode(BismuthBase):
             app_log.info("Status: Syncing nodes: {}/3".format(len(syncing)))
 
             # Status display for Peers related info
-            peers.status_log()
+            peers.print_status_log()
             """
             await self.reach_out()
             await self._async_wait()

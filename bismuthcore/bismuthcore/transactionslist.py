@@ -13,7 +13,7 @@ class TransactionsList:
     """A generic list of transactions, from one or more blocks."""
 
     # Inner storage is compact, binary form
-    __slots__ = ('transactions')
+    __slots__ = ('transactions', )
 
     def __init__(self, transactions: List[Transaction]):
         """Default constructor with list of binary, non verbose,

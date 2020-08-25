@@ -7,8 +7,9 @@ from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from base64 import b64decode, b64encode
 from sqlite3 import Binary
 from Cryptodome.Hash import SHA
+from bismuthcore.compat import quantize_two, quantize_eight
 
-__version__ = '0.0.9'
+__version__ = '0.0.10'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -32,11 +33,11 @@ class Transaction:
     # Inner storage is compact, binary form
 
     __slots__ = ('block_height', 'timestamp', 'address', 'recipient', 'amount', 'signature', 'public_key',
-                 'block_hash', 'fee', 'reward', 'operation', 'openfield')
+                 'block_hash', 'fee', 'reward', 'operation', 'openfield', 'legacy_buffer')
 
     def __init__(self, block_height: int=0, timestamp: float=0, address: str='', recipient: str='',
                  amount: int=0, signature: bytes=b'', public_key: bytes=b'', block_hash: bytes=b'', fee: int=0,
-                 reward: int=0, operation: str='', openfield: str='', sanitize: bool=True):
+                 reward: int=0, operation: str='', openfield: str='', sanitize: bool=True, legacy_buffer: bytes=b''):
         """Default constructor with binary, non verbose, parameters"""
         self.block_height = block_height
         self.timestamp = timestamp
@@ -50,6 +51,7 @@ class Transaction:
         self.reward = reward
         self.operation = operation
         self.openfield = openfield
+        self.legacy_buffer = legacy_buffer  # temp control v2 EGG_EVO
         if sanitize:
             self._sanitize()
 
@@ -69,9 +71,9 @@ class Transaction:
         raise RuntimeError("TODO")
 
     @staticmethod
-    def int_to_f8(an_int: int):
+    def int_to_f8(an_int: int) -> str:
         """Helper function to convert an int amount - inner format - to legacy string 0.8f """
-        return str('{:.8f}'.format(Decimal(an_int) / DECIMAL_1E8))
+        return f"{(Decimal(an_int) / DECIMAL_1E8):.8f}"
 
     @staticmethod
     def f8_to_int(a_str: str):
@@ -91,8 +93,17 @@ class Transaction:
         Call as tx = Transaction.from_legacy_params(0, '', 0 ...)
         """
         int_amount = Transaction.f8_to_int(amount)
+        if int_amount < 0:
+            raise ValueError("Amount can't be negative")
         int_fee = Transaction.f8_to_int(fee)
+        if int_fee < 0:
+            raise ValueError("Fees can't be negative")
         int_reward = Transaction.f8_to_int(reward)
+        if int_reward < 0:
+            raise ValueError("Reward can't be negative")
+        legacy_buffer = str((f"{quantize_two(timestamp):0.2f}", address, recipient, f"{quantize_eight(amount):0.8f}", operation,
+                             openfield)).encode("utf-8")
+
         # public_key is double b64 encoded in legacy format.
         # Could win even more storing the public_key decoded once more, but may generate more overhead at decode
         # Postponed, since pubkeys do not need to be stored for every address every time
@@ -102,9 +113,13 @@ class Transaction:
         # empty pubkey and signatures are stored as "0" and not "", why the len() > 1
         # whereas block hash only is hex encoded.
         bin_block_hash = bytes.fromhex(block_hash)
+        operation = operation[:30]
+        openfield = openfield[:100000]
+        address = address[:56]
+        recipient = recipient[:56]
         #
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
-                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True)
+                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True, legacy_buffer=legacy_buffer)
 
     @classmethod
     def from_legacymempool(cls, tx: list, sanitize=False):
@@ -295,10 +310,23 @@ class Transaction:
         return (self.block_height, self.timestamp, self.address, self.recipient, amount, signature, public_key, block_hash,
                 fee, reward, self.operation, self.openfield)
 
+    def to_tuple_for_block_hash(self):
+        # Needed for compatibility.
+        # Block hash uses still another format for tx serialization.
+        public_key = b64encode(self.public_key).decode('utf-8') if self.public_key else "0"
+        # 0 to keep compatibility with legacy
+        signature = b64encode(self.signature).decode('utf-8') if self.signature else "0"
+        tuple = (f"{self.timestamp:.2f}", self.address, self.recipient, Transaction.int_to_f8(self.amount),
+                 signature, public_key, self.operation, self.openfield)
+        return tuple
+
     def to_buffer_for_signing(self):
         """Builds buffer to sign from core properties"""
-        buffer = str((f"{self.timestamp:.2f}", self.address, self.recipient, Transaction.int_to_f8(self.amount),
+        buffer = str((f"{self.timestamp:.2f}", self.address, self.recipient, Transaction.int_to_f8(self.amount), self.operation, self.openfield)).encode("utf-8")
+        """amount = float(Transaction.int_to_f8(self.amount)) if self.amount > 0 else 0
+        buffer = str((self.timestamp, self.address, self.recipient, amount,
                       self.operation, self.openfield)).encode("utf-8")
+        """
         return buffer
 
     def to_bin_tuple(self, sqlite_encode=False):
@@ -349,3 +377,18 @@ class Transaction:
         check.update(self.openfield.encode('utf-8'))
         return check.digest()
 
+    @property
+    def bis_amount(self) -> str:
+        return self.int_to_f8(self.amount)
+
+    @property
+    def bis_fee(self) -> str:
+        return self.int_to_f8(self.fee)
+
+    @property
+    def bis_reward(self) -> str:
+        return self.int_to_f8(self.reward)
+
+    @property
+    def signature_encoded(self):
+        return b64encode(self.signature).decode('utf-8')

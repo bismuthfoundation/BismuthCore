@@ -9,8 +9,12 @@ from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from sqlite3 import Binary
 from base64 import b64decode, b64encode
 from bismuthcore.compat import quantize_eight
+from polysign.signerfactory import SignerFactory
 
-__version__ = '0.0.4'
+__version__ = '0.0.6'
+
+
+K1E8 = 100000000
 
 
 def base_app_log(app_log=None):
@@ -67,6 +71,18 @@ def fee_calculate(openfield: str, operation: str='', block: int=0) -> Decimal:
     return quantize_eight(fee)
 
 
+def fee_calculate_int(openfield: str, operation: str='', block: int=0) -> int:
+    # block var is no more needed, kept for interface retro compatibility
+    fee = K1E8 // 100 + len(openfield) * K1E8 // 100000  # 0.01 dust
+    if operation == "token:issue":
+        fee += 10 * K1E8
+    if openfield.startswith("alias="):
+        fee += K1E8
+    if operation == "alias:register":  # Take fee into account even if the protocol is not live yet.
+        fee += K1E8
+    return fee
+
+
 def just_int_from(s):
     return int(''.join(i for i in s if i.isdigit()))
 
@@ -107,6 +123,15 @@ def sanitize_address(address: str) -> str:
     # Could use polysign to further check if it's valid. not sure it(s worth it at this stage.
     # There, it's to avoid easy exploits, not fully validate.
     return str(address)[:56]
+
+
+def address_validate(address: str) -> bool:
+    return SignerFactory.address_is_valid(address)
+
+
+def address_is_rsa(address: str) -> bool:
+    return SignerFactory.address_is_rsa(address)
+
 
 
 """

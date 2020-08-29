@@ -8,13 +8,18 @@ from abc import ABC, abstractmethod
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from sqlite3 import Binary
 from base64 import b64decode, b64encode
+from sys import version_info
 from bismuthcore.compat import quantize_eight
 from polysign.signerfactory import SignerFactory
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 
 
 K1E8 = 100000000
+
+
+def py_version():
+    return int(str(version_info.major) + str(version_info.minor) + str(version_info.micro))
 
 
 def base_app_log(app_log=None):

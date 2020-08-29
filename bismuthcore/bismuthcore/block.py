@@ -82,7 +82,10 @@ class Block(TransactionsList):
             # EGG_EVO: Temp coherence control for db V2
             buffer2 = transaction.to_buffer_for_signing()
             if transaction.legacy_buffer != buffer2:
-                print(transaction.legacy_buffer, buffer2)
+                print(f"Amount '{transaction.temp_amount}' Int {transaction.amount}")
+                print("Legacy ", transaction.legacy_buffer)
+                print("Buffer2", buffer2)
+
                 raise ValueError("Buffer mismatch DB V2")
                 # Will raise if error - also includes reconstruction of address from pubkey to make sure it matches
             # TODO: add a "raw" method in polysign so we avoid encode/recode
@@ -90,7 +93,7 @@ class Block(TransactionsList):
                                                b64encode(transaction.public_key).decode('utf-8'),
                                                buffer2, transaction.address)
             # TODO
-            print(f"Valid signature from {transaction.address} to {transaction.recipient} amount {Transaction.int_to_f8(transaction.amount)}")
+            # print(f"Valid signature from {transaction.address} to {transaction.recipient} amount {Transaction.int_to_f8(transaction.amount)}")
             """
             node.logger.digest_log.debug(f"Valid signature from {tx.received_address} "
                                          f"to {tx.received_recipient} amount {tx.received_amount}")
@@ -121,8 +124,12 @@ class Block(TransactionsList):
     def set_height(self, height: int) -> None:
         self.transactions[-1].block_height = height
 
-    def set_height(self, height: int) -> None:
-        self.transactions[-1].block_height = height
+    def set_fee(self, fee: int) -> None:
+        self.transactions[-1].fee = fee
 
     def set_reward(self, reward: int) -> None:
         self.transactions[-1].reward = reward
+
+    def set_hash(self, hash: bytes) -> None:
+        for transaction in self.transactions:
+            transaction.block_hash = hash

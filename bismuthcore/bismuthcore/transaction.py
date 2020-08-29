@@ -8,6 +8,8 @@ from base64 import b64decode, b64encode
 from sqlite3 import Binary
 from Cryptodome.Hash import SHA
 from bismuthcore.compat import quantize_two, quantize_eight
+import sys, os
+from time import sleep
 
 __version__ = '0.0.10'
 
@@ -33,11 +35,12 @@ class Transaction:
     # Inner storage is compact, binary form
 
     __slots__ = ('block_height', 'timestamp', 'address', 'recipient', 'amount', 'signature', 'public_key',
-                 'block_hash', 'fee', 'reward', 'operation', 'openfield', 'legacy_buffer')
+                 'block_hash', 'fee', 'reward', 'operation', 'openfield', 'legacy_buffer', "temp_amount")
 
     def __init__(self, block_height: int=0, timestamp: float=0, address: str='', recipient: str='',
                  amount: int=0, signature: bytes=b'', public_key: bytes=b'', block_hash: bytes=b'', fee: int=0,
-                 reward: int=0, operation: str='', openfield: str='', sanitize: bool=True, legacy_buffer: bytes=b''):
+                 reward: int=0, operation: str='', openfield: str='', sanitize: bool=True, legacy_buffer: bytes=b'',
+                 temp_amount: str=""):
         """Default constructor with binary, non verbose, parameters"""
         self.block_height = block_height
         self.timestamp = timestamp
@@ -52,6 +55,7 @@ class Transaction:
         self.operation = operation
         self.openfield = openfield
         self.legacy_buffer = legacy_buffer  # temp control v2 EGG_EVO
+        self.temp_amount = temp_amount
         if sanitize:
             self._sanitize()
 
@@ -76,8 +80,14 @@ class Transaction:
         return f"{(Decimal(an_int) / DECIMAL_1E8):.8f}"
 
     @staticmethod
-    def f8_to_int(a_str: str):
+    def f8_to_int(a_str: str) -> int:
         """Helper function to convert a legacy string 0.8f to compact int format"""
+        if type(a_str) == float:
+            print("** f8_to_int got a float")
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
+            sleep(1)
         return int(Decimal(a_str) * DECIMAL_1E8)
 
     """
@@ -92,7 +102,24 @@ class Transaction:
         Create from legacy - verbose - parameters.
         Call as tx = Transaction.from_legacy_params(0, '', 0 ...)
         """
+        if type(amount) == float:
+            amount = f'{amount:0.8f}'
+        if type(fee) == float:
+            fee = f'{fee:0.8f}'
+        if type(reward) == float:
+            reward = f'{reward:0.8f}'
         int_amount = Transaction.f8_to_int(amount)
+        """
+        if int_amount > 0:
+            print("** debug from_legacy_params")
+            print(amount, int_amount, type(amount), f"{amount}")
+            amount2 = Decimal(amount) * DECIMAL_1E8
+            amount3 = Decimal(amount) * Decimal(100000000)
+            amount2i = int(Decimal(amount) * DECIMAL_1E8)
+            amount3i = int(Decimal(amount) * Decimal(100000000))
+            print(amount2, amount3, amount2i, amount3i)
+            sleep(1)
+        """
         if int_amount < 0:
             raise ValueError("Amount can't be negative")
         int_fee = Transaction.f8_to_int(fee)
@@ -119,7 +146,8 @@ class Transaction:
         recipient = recipient[:56]
         #
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
-                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True, legacy_buffer=legacy_buffer)
+                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True, legacy_buffer=legacy_buffer,
+                   temp_amount=amount)
 
     @classmethod
     def from_legacymempool(cls, tx: list, sanitize=False):
@@ -155,6 +183,12 @@ class Transaction:
         public_key = public_key.replace("\n-----END PUBLIC KEY-----", "").replace("-----BEGIN PUBLIC KEY-----\n","")
         """"-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDKvLTbDx85a1ugb/6xMMhVOq6U\n2GeYT8+Iq2z9FwIMR40l2ttGqNK7varNccFLIu8Kn4ogDQs3WSWQCxNkhZh/FqzF\nYYa3/ItPPfzrXqgajwD8q4Zt4Ymjt8+2BkImPjjFNkuTQIz2Iu3yFqOIxLdjMw7n\nUVu9tFPiUkD0VnDPLQIDAQAB\n-----END PUBLIC KEY-----"""
         #print("public_key2", public_key)
+        if type(amount) == float:
+            amount = f'{amount:0.8f}'
+        if type(fee) == float:
+            fee = f'{fee:0.8f}'
+        if type(reward) == float:
+            reward = f'{reward:0.8f}'
         int_amount = Transaction.f8_to_int(amount)
         int_fee = Transaction.f8_to_int(fee)
         int_reward = Transaction.f8_to_int(reward)

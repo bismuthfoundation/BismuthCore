@@ -31,12 +31,12 @@ class TransactionsList:
         # (may need to add something to the list) - to be checked later on
         return [transaction.to_dict(legacy=legacy, decode_pubkey=decode_pubkey) for transaction in self.transactions]
 
-    def to_listoftuples(self) -> list:
+    def to_listoftuples(self, simplified=False) -> list:
         """
         The block as a list of Transactions, converted to legacy tuples.
         :return:
         """
-        return [transaction.to_tuple() for transaction in self.transactions]
+        return [transaction.to_tuple(simplified=simplified) for transaction in self.transactions]
 
     def to_blocks_dict(self) -> dict:
         """a Block instance can also be a list of transactions from several different blocks.

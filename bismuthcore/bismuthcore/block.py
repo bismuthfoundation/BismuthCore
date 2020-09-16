@@ -77,9 +77,9 @@ class Block(TransactionsList):
                 raise ValueError("Not a valid recipient address")
 
     def validate_heavy(self):
-        """Very intensive checks"""
+        """More intensive checks - sigs checks"""
         for transaction in self.transactions:
-            # EGG_EVO: Temp coherence control for db V2
+            # EGG_EVO: Temp coherence control for db V2. TODO: Remove after more tests
             buffer2 = transaction.to_buffer_for_signing()
             if transaction.legacy_buffer != buffer2:
                 print(f"Amount '{transaction.temp_amount}' Int {transaction.amount}")
@@ -87,12 +87,17 @@ class Block(TransactionsList):
                 print("Buffer2", buffer2)
 
                 raise ValueError("Buffer mismatch DB V2")
-                # Will raise if error - also includes reconstruction of address from pubkey to make sure it matches
+            # Will raise if error - also includes reconstruction of address from pubkey to make sure it matches
             # TODO: add a "raw" method in polysign so we avoid encode/recode
+            """
             SignerFactory.verify_bis_signature(b64encode(transaction.signature).decode('utf-8'),
                                                b64encode(transaction.public_key).decode('utf-8'),
                                                buffer2, transaction.address)
-            # TODO
+            """
+            SignerFactory.verify_bis_signature_raw(transaction.signature,
+                                               transaction.public_key,
+                                               buffer2, transaction.address)
+            # TODO: node log
             # print(f"Valid signature from {transaction.address} to {transaction.recipient} amount {Transaction.int_to_f8(transaction.amount)}")
             """
             node.logger.digest_log.debug(f"Valid signature from {tx.received_address} "

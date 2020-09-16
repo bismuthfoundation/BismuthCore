@@ -138,7 +138,6 @@ def address_is_rsa(address: str) -> bool:
     return SignerFactory.address_is_rsa(address)
 
 
-
 """
 Temporary benchmarking helpers - Potential dup code
 """

@@ -11,7 +11,7 @@ from bismuthcore.compat import quantize_two, quantize_eight
 import sys, os
 from time import sleep
 
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -135,6 +135,15 @@ class Transaction:
         # Could win even more storing the public_key decoded once more, but may generate more overhead at decode
         # Postponed, since pubkeys do not need to be stored for every address every time
         bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
+        # print("bin public_key1", bin_public_key)
+        try:
+            # RSA pubkeys
+            bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"").replace(
+                b"-----BEGIN PUBLIC KEY-----\n", b"")
+            # print("bin public_key2", bin_public_key)
+            bin_public_key = b64decode(bin_public_key[:1068])
+        except:
+            pass
         # signature is b64 encoded in legacy format.
         bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
         # empty pubkey and signatures are stored as "0" and not "", why the len() > 1
@@ -198,7 +207,7 @@ class Transaction:
             bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"").replace(b"-----BEGIN PUBLIC KEY-----\n",b"")
             #print("bin public_key2", bin_public_key)
             bin_public_key = b64decode(bin_public_key[:1068])
-            #print("bin public_key3", bin_public_key)
+            # print("bin public_key3", bin_public_key)
         except:
             pass
 
@@ -221,6 +230,7 @@ class Transaction:
         # print(tx)
         block_height, timestamp, address, recipient, int_amount, bin_signature, \
         bin_public_key, bin_block_hash, int_fee, int_reward, operation, openfield = tx
+        # print("bin public_key3 v2", bin_public_key)
         #
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield, sanitize)
@@ -325,7 +335,7 @@ class Transaction:
         """
         return json.dumps(self.to_dict(True))
 
-    def to_tuple(self):
+    def to_tuple(self, simplified=False):
         """
         The transaction object as a legacy tuple in the following order:
         'block_height', 'timestamp', 'address', 'recipient', 'amount', 'signature', 'public_key', 'block_hash',
@@ -337,10 +347,17 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
-        public_key = b64encode(self.public_key).decode('utf-8') if self.public_key else "0"
-        # 0 to keep compatibility with legacy
-        signature = b64encode(self.signature).decode('utf-8') if self.signature else "0"
-        block_hash = self.block_hash.hex()
+        if simplified:
+            public_key = b''
+            signature = b''
+        else:
+            public_key = b64encode(self.public_key).decode('utf-8') if self.public_key else "0"
+            # 0 to keep compatibility with legacy
+            signature = b64encode(self.signature).decode('utf-8') if self.signature else "0"
+        if simplified and self.block_height < 0:
+            block_hash = b''
+        else:
+            block_hash = self.block_hash.hex()
         return (self.block_height, self.timestamp, self.address, self.recipient, amount, signature, public_key, block_hash,
                 fee, reward, self.operation, self.openfield)
 

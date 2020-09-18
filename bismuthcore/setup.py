@@ -11,7 +11,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['polysign>=0.1.0', 'Tornado', 'ConcurrentLogHandler']
+requirements = ['polysign>=0.1.0', 'Tornado', 'ConcurrentLogHandler', 'requests', 'aioprocessing']
 
 setup_requirements = ['pytest-runner', ]
 
@@ -41,6 +41,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/bismuthfoundation/bismuthcore',
-    version='0.0.13',
+    version='0.0.14',
     zip_safe=False,
 )

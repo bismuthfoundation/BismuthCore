@@ -3,14 +3,16 @@ Helper Class and functions
 """
 
 import logging
-import requests
 from abc import ABC, abstractmethod
+from base64 import b64decode
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from sqlite3 import Binary
-from base64 import b64decode, b64encode
 from sys import version_info
-from bismuthcore.compat import quantize_eight
+
+import requests
 from polysign.signerfactory import SignerFactory
+
+from bismuthcore.compat import quantize_eight
 
 __version__ = '0.0.7'
 
@@ -100,23 +102,20 @@ def download_file(url: str, filename: str) -> None:
 
     returns `filename`
     """
-    try:
-        r = requests.get(url, stream=True)
-        total_size = int(r.headers.get('content-length')) / 1024
+    r = requests.get(url, stream=True)
+    total_size = int(r.headers.get('content-length')) / 1024
 
-        with open(filename, 'wb') as fp:
-            chunkno = 0
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:
-                    chunkno = chunkno + 1
-                    if chunkno % 10000 == 0:  # every x chunks
-                        print(f"Downloaded {int(100 * (chunkno / total_size))} %")
+    with open(filename, 'wb') as fp:
+        chunkno = 0
+        for chunk in r.iter_content(chunk_size=1024):
+            if chunk:
+                chunkno = chunkno + 1
+                if chunkno % 10000 == 0:  # every x chunks
+                    print(f"Downloaded {int(100 * (chunkno / total_size))} %")
 
-                    fp.write(chunk)
-                    fp.flush()
-            print("Downloaded 100 %")
-    except:
-        raise
+                fp.write(chunk)
+                fp.flush()
+        print("Downloaded 100 %")
 
 
 """
@@ -167,7 +166,7 @@ def native_tx_to_bin_sqlite(tx):
             Binary(b64decode(tx[6])), Binary(b64decode(tx[7])), f8_to_int(tx[8]), f8_to_int(tx[9]), tx[10], tx[11])
 
 
-class TxConverter():
+class TxConverter:
 
     @staticmethod
     def native_tx_to_bin_sqlite(tx):

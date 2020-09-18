@@ -2,11 +2,9 @@
 Tx insert benchmark
 """
 
+import json
 import sqlite3
 import sys
-import json
-from time import time
-from os import remove
 from decimal import Decimal
 
 sys.path.append('../')
@@ -45,7 +43,7 @@ SQL_CREATE = ('''
               'CREATE INDEX `Amount Index` ON `transactions` (`iamount`)',
               'CREATE INDEX `Address Index` ON `transactions` (`address`)',
               'CREATE INDEX `Operation Index` ON `transactions` (`operation`)',
-)
+              )
 
 
 SQL_CREATE_LEGACY = ('''
@@ -88,53 +86,57 @@ def create(db, sql: tuple):
 
 
 @timeit
-def insert_new(txs):
-    # Using inram DB to avoid disk I/O artefacts
+def insert_new(tx_list):
+    # Using in-ram DB to avoid disk I/O artefacts
     test_new = sqlite3.connect('file:ledger_new?mode=memory', uri=True, timeout=1)
     create(test_new, SQL_CREATE)
-    for tx in txs:
+    for tx in tx_list:
         # Creates instance from tuple data, copy to inner properties
         tx = Transaction.from_legacy(tx)
         # Then converts to bin and into bin tuple
-        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_bin_tuple(sqlite_encode=True))
+        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                         tx.to_bin_tuple(sqlite_encode=True))
     return test_new
 
 
 @timeit
-def insert_new_function(txs):
+def insert_new_function(tx_list):
     """ Uses a call to a function helper"""
     test_new = sqlite3.connect('file:ledger_new_function?mode=memory', uri=True, timeout=1)
     create(test_new, SQL_CREATE)
-    for tx in txs:
+    for tx in tx_list:
         # converts into bin tuple - just conversion, no object created, no stored property.
         test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", native_tx_to_bin_sqlite(tx))
     return test_new
 
+
 @timeit
-def insert_new_class(txs):
+def insert_new_class(tx_list):
     """ Uses a call to a function helper"""
     test_new = sqlite3.connect('file:ledger_new_class?mode=memory', uri=True, timeout=1)
     create(test_new, SQL_CREATE)
-    for tx in txs:
+    for tx in tx_list:
         # converts into bin tuple - just conversion, no object created, no stored property.
-        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", TxConverter.native_tx_to_bin_sqlite(tx))
+        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                         TxConverter.native_tx_to_bin_sqlite(tx))
     return test_new
 
+
 @timeit
-def insert_legacy(txs):
+def insert_legacy(tx_list):
     test_legacy = sqlite3.connect('file:ledger_legacy?mode=memory', uri=True, timeout=1)
     create(test_legacy, SQL_CREATE_LEGACY)
-    for tx in txs:
+    for tx in tx_list:
         # Directly insert tuple without any conversion to db
         test_legacy.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx)
     return test_legacy
 
 
 @timeit
-def insert_legacy_object(txs):
+def insert_legacy_object(tx_list):
     test_legacy = sqlite3.connect('file:ledger_legacy?mode=memory', uri=True, timeout=1)
     create(test_legacy, SQL_CREATE_LEGACY)
-    for tx in txs:
+    for tx in tx_list:
         # Creates instance from tuple data, copy to inner properties (converts to binary as well)
         tx = Transaction.from_legacy(tx)
         # Then export again
@@ -162,7 +164,8 @@ def balance_new(db, address: str):
 @timeit
 def balance_new2(db, address: str):
     q1 = db.execute(
-        "SELECT (SELECT sum(iamount + ireward) FROM transactions WHERE recipient = ? ) - (SELECT sum(iamount + ifee) FROM transactions WHERE address = ?)",
+        "SELECT (SELECT sum(iamount + ireward) FROM transactions WHERE recipient = ? ) "
+        "- (SELECT sum(iamount + ifee) FROM transactions WHERE address = ?)",
         (address, address),
     )
     r1 = q1.fetchone()
@@ -190,9 +193,8 @@ def balance_legacy(db, address: str):
 
 
 if __name__ == "__main__":
-
     # read data
-    txs=[]
+    txs = []
     with open("../Utils/tx_tuple_dataset.json") as f:
         for raw in f:
             txs.append(json.loads(raw))
@@ -221,7 +223,8 @@ bench_legacy_object  8.732996 s
 """
 
 """
-select distinct(address), count(*) as total from transactions where block_height > 700000 group by address order by total desc limit 50;
+select distinct(address), count(*) as total from transactions where block_height > 700000 
+group by address order by total desc limit 50;
 e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38|518996
 952cfda35b32e2eac3e3431f566b80a0c47c6c512d3f283c1e57aee3|379497
 de98671db1ce0e5c9ba89ab7ccdca6c427460295b8dd3642e9b2bb96|236017

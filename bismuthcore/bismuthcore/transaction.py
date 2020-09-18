@@ -3,13 +3,16 @@ Bismuth core transaction structure
 """
 
 import json
-from decimal import Decimal, getcontext, ROUND_HALF_EVEN
+import os
+import sys
 from base64 import b64decode, b64encode
+from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from sqlite3 import Binary
-from Cryptodome.Hash import SHA
-from bismuthcore.compat import quantize_two, quantize_eight
-import sys, os
 from time import sleep
+
+from Cryptodome.Hash import SHA
+
+from bismuthcore.compat import quantize_two, quantize_eight
 
 __version__ = '0.0.11'
 
@@ -128,8 +131,8 @@ class Transaction:
         int_reward = Transaction.f8_to_int(reward)
         if int_reward < 0:
             raise ValueError("Reward can't be negative")
-        legacy_buffer = str((f"{quantize_two(timestamp):0.2f}", address, recipient, f"{quantize_eight(amount):0.8f}", operation,
-                             openfield)).encode("utf-8")
+        legacy_buffer = str((f"{quantize_two(timestamp):0.2f}", address, recipient, f"{quantize_eight(amount):0.8f}",
+                             operation, openfield)).encode("utf-8")
 
         # public_key is double b64 encoded in legacy format.
         # Could win even more storing the public_key decoded once more, but may generate more overhead at decode
@@ -142,7 +145,7 @@ class Transaction:
                 b"-----BEGIN PUBLIC KEY-----\n", b"")
             # print("bin public_key2", bin_public_key)
             bin_public_key = b64decode(bin_public_key[:1068])
-        except:
+        except Exception:
             pass
         # signature is b64 encoded in legacy format.
         bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
@@ -155,15 +158,16 @@ class Transaction:
         recipient = recipient[:56]
         #
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
-                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True, legacy_buffer=legacy_buffer,
-                   temp_amount=amount)
+                   bin_block_hash, int_fee, int_reward, operation, openfield, sanitize=True,
+                   legacy_buffer=legacy_buffer, temp_amount=amount)
 
     @classmethod
     def from_legacymempool(cls, tx: list, sanitize=False):
         """
         mempool has a partial data set.
         0 timestamp TEXT, 1 address TEXT, 2 recipient TEXT, 3 amount TEXT, 4 signature TEXT, " \
-        5 public_key TEXT, 6 operation TEXT, 7 openfield TEXT, 8 mergedts INTEGER(4) not null default (strftime('%s','now')) )"
+        5 public_key TEXT, 6 operation TEXT, 7 openfield TEXT,
+        8 mergedts INTEGER(4) not null default (strftime('%s','now')) )"
         :param tx:
         :param sanitize:
         :return:
@@ -187,11 +191,10 @@ class Transaction:
             public_key, block_hash, fee, reward, operation, openfield = tx
         #
 
-        #print("public_key1", public_key)
+        # print("public_key1", public_key)
         bin_public_key = b""
-        public_key = public_key.replace("\n-----END PUBLIC KEY-----", "").replace("-----BEGIN PUBLIC KEY-----\n","")
-        """"-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDKvLTbDx85a1ugb/6xMMhVOq6U\n2GeYT8+Iq2z9FwIMR40l2ttGqNK7varNccFLIu8Kn4ogDQs3WSWQCxNkhZh/FqzF\nYYa3/ItPPfzrXqgajwD8q4Zt4Ymjt8+2BkImPjjFNkuTQIz2Iu3yFqOIxLdjMw7n\nUVu9tFPiUkD0VnDPLQIDAQAB\n-----END PUBLIC KEY-----"""
-        #print("public_key2", public_key)
+        public_key = public_key.replace("\n-----END PUBLIC KEY-----", "").replace("-----BEGIN PUBLIC KEY-----\n", "")
+        # print("public_key2", public_key)
         if type(amount) == float:
             amount = f'{amount:0.8f}'
         if type(fee) == float:
@@ -203,12 +206,13 @@ class Transaction:
         int_reward = Transaction.f8_to_int(reward)
         try:
             bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
-            #print("bin public_key1", bin_public_key)
-            bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"").replace(b"-----BEGIN PUBLIC KEY-----\n",b"")
-            #print("bin public_key2", bin_public_key)
+            # print("bin public_key1", bin_public_key)
+            bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"")\
+                .replace(b"-----BEGIN PUBLIC KEY-----\n", b"")
+            # print("bin public_key2", bin_public_key)
             bin_public_key = b64decode(bin_public_key[:1068])
             # print("bin public_key3", bin_public_key)
-        except:
+        except Exception:
             pass
 
         bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
@@ -228,8 +232,8 @@ class Transaction:
             # tx list can omit the blockheight (like for mempool)
             tx.insert(0, 0)
         # print(tx)
-        block_height, timestamp, address, recipient, int_amount, bin_signature, \
-        bin_public_key, bin_block_hash, int_fee, int_reward, operation, openfield = tx
+        (block_height, timestamp, address, recipient, int_amount, bin_signature,
+         bin_public_key, bin_block_hash, int_fee, int_reward, operation, openfield) = tx
         # print("bin public_key3 v2", bin_public_key)
         #
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
@@ -253,7 +257,8 @@ class Transaction:
 
         json can either contain public_key as double encoded b64 or not.
         In either case, amount will be as string, 0.8f
-        block_hash, sender and recipient are to be hex encoded, for readability reasons, and because json does not support byte streams.
+        block_hash, sender and recipient are to be hex encoded, for readability reasons,
+        and because json does not support byte streams.
 
         This method tries to be as forgiveable as possible at import. However it *can't* import with amounts as int.
         """
@@ -317,9 +322,10 @@ class Transaction:
                 if decode_pubkey:
                     try:
                         public_key = b64decode(public_key).decode('utf-8')
-                    except:
+                    except Exception:
                         pass  # support new pubkey schemes
-            signature = b64encode(self.signature).decode('utf-8') if self.signature else ''  # Properly returns empty values
+            signature = b64encode(self.signature).decode('utf-8') if self.signature else ''
+            # Properly returns empty values
             block_hash = self.block_hash.hex()
             return dict(zip(TRANSACTION_KEYS, (self.block_height, self.timestamp, self.address, self.recipient, amount,
                                                signature, public_key, block_hash, fee, reward,
@@ -342,7 +348,8 @@ class Transaction:
         'fee', 'reward', 'operation', 'openfield'
 
         Legacy format means amounts will be string, 0.8f, and all bin content hex or b64 encoded.
-        no "legacy" flag, as legacy is implied by "tuple" format. Could be renamed to more explicit "legacy_tuple" to avoid any issue.
+        no "legacy" flag, as legacy is implied by "tuple" format.
+        Could be renamed to more explicit "legacy_tuple" to avoid any issue.
         """
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
@@ -358,22 +365,35 @@ class Transaction:
             block_hash = b''
         else:
             block_hash = self.block_hash.hex()
-        return (self.block_height, self.timestamp, self.address, self.recipient, amount, signature, public_key, block_hash,
-                fee, reward, self.operation, self.openfield)
+        return (self.block_height, self.timestamp, self.address, self.recipient, amount, signature, public_key,
+                block_hash, fee, reward, self.operation, self.openfield)
+
+    @classmethod
+    def normalize_key(cls, s: str) -> str:
+        """Re add boundaries and segment by 64 chars wide."""
+        # Dup code with polysign
+        chunks = [s[i:i + 64] for i in range(0, len(s), 64)]
+        chunks.insert(0, "-----BEGIN PUBLIC KEY-----")
+        chunks.append("-----END PUBLIC KEY-----")
+        return "\n".join(chunks)
 
     def to_tuple_for_block_hash(self):
         # Needed for compatibility.
         # Block hash uses still another format for tx serialization.
         public_key = b64encode(self.public_key).decode('utf-8') if self.public_key else "0"
         # 0 to keep compatibility with legacy
+        if len(public_key) > 128:  # RSA key, reformat - needed since part of block hash
+            public_key = b64encode(self.normalize_key(public_key).encode()).decode()
+        # TODO: make sure this is still ok for ecdsa and ed25519 (regnet, testnet)
         signature = b64encode(self.signature).decode('utf-8') if self.signature else "0"
-        tuple = (f"{self.timestamp:.2f}", self.address, self.recipient, Transaction.int_to_f8(self.amount),
-                 signature, public_key, self.operation, self.openfield)
-        return tuple
+        tuple_result = (f"{self.timestamp:.2f}", self.address, self.recipient, Transaction.int_to_f8(self.amount),
+                        signature, public_key, self.operation, self.openfield)
+        return tuple_result
 
     def to_buffer_for_signing(self):
         """Builds buffer to sign from core properties"""
-        buffer = str((f"{self.timestamp:.2f}", self.address, self.recipient, Transaction.int_to_f8(self.amount), self.operation, self.openfield)).encode("utf-8")
+        buffer = str((f"{self.timestamp:.2f}", self.address, self.recipient, Transaction.int_to_f8(self.amount),
+                      self.operation, self.openfield)).encode("utf-8")
         """amount = float(Transaction.int_to_f8(self.amount)) if self.amount > 0 else 0
         buffer = str((self.timestamp, self.address, self.recipient, amount,
                       self.operation, self.openfield)).encode("utf-8")
@@ -390,8 +410,9 @@ class Transaction:
         """
         if sqlite_encode:
             # sqlite needs .binary() to encode blobs
-            return (self.block_height, self.timestamp, self.address, self.recipient, self.amount, Binary(self.signature),
-                    Binary(self.public_key), Binary(self.block_hash), self.fee, self.reward, self.operation, self.openfield)
+            return (self.block_height, self.timestamp, self.address, self.recipient, self.amount,
+                    Binary(self.signature), Binary(self.public_key), Binary(self.block_hash),
+                    self.fee, self.reward, self.operation, self.openfield)
 
         return (self.block_height, self.timestamp, self.address, self.recipient, self.amount, self.signature,
                 self.public_key, self.block_hash, self.fee, self.reward, self.operation, self.openfield)

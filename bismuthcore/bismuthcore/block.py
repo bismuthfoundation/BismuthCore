@@ -19,15 +19,16 @@ class Block(TransactionsList):
     Holds a single block only, and can provide extra info about the block"""
 
     # Inner storage is compact, binary form
-    __slots__ = ('computed', '_tokens_operation_present', '_last_block_timestamp')
+    __slots__ = ('computed', '_tokens_operation_present', '_last_block_timestamp', 'mining_reward')
 
-    def __init__(self, transactions: List[Transaction], compute=False, check_txs=False, last_block_timestamp=0):
+    def __init__(self, transactions: List[Transaction], compute: bool=False, check_txs: bool=False, last_block_timestamp=0, mining_reward: int=0):
         """Default constructor with list of binary, non verbose,
         Transactions instances, mining transaction at the end."""
         super().__init__(transactions)
         self._last_block_timestamp = last_block_timestamp
         self._tokens_operation_present = None
         self.computed = False
+        self.mining_reward = mining_reward
         if compute:
             self._compute()
         if check_txs:
@@ -56,8 +57,12 @@ class Block(TransactionsList):
         if self.miner_tx.timestamp <= self._last_block_timestamp:
             raise ValueError(f"!Block is older {self.miner_tx.timestamp} "
                              f"than the previous one {self._last_block_timestamp} , will be rejected")
+        signature_list = set()
         for transaction in self.transactions:
             # if transaction.operation in ["token:issue", "token:transfer"]:
+            if not transaction.signature:
+                raise ValueError("Missing signature")
+            signature_list.add(transaction.signature)
             if transaction.operation.startswith("token"):
                     self._tokens_operation_present = True
             if transaction.timestamp > start_time:
@@ -65,6 +70,8 @@ class Block(TransactionsList):
                                  f"{((transaction.timestamp - start_time) / 60):0.2f} minutes in the future")
             if self._last_block_timestamp - 86400 > transaction.timestamp:
                 raise ValueError("Transaction older than 24h not allowed.")
+        if len(self.transactions) != len(signature_list):
+            raise ValueError("There are duplicate signatures in this block, rejected")
 
     def validate_mid(self):
         """More intensive checks"""
@@ -127,14 +134,17 @@ class Block(TransactionsList):
         return self.transactions[-1].block_height
 
     def set_height(self, height: int) -> None:
-        self.transactions[-1].block_height = height
+        for transaction in self.transactions:
+            transaction.block_height = height
 
+    """
     def set_fee(self, fee: int) -> None:
         self.transactions[-1].fee = fee
+    """
 
     def set_reward(self, reward: int) -> None:
         self.transactions[-1].reward = reward
 
-    def set_hash(self, hash: bytes) -> None:
+    def set_hash(self, block_hash: bytes) -> None:
         for transaction in self.transactions:
-            transaction.block_hash = hash
+            transaction.block_hash = block_hash

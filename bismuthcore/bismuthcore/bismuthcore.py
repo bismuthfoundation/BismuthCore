@@ -5,26 +5,27 @@
 
 import asyncio
 import importlib
+from os import path
+from sys import exc_info
 from time import time
 
 import aioprocessing
-from bismuthcore.clientcommands import ClientCommands
-from bismuthcore.messages.coremessages import VersionMessage
-from bismuthcore.helpers import BismuthBase
 from tornado.ioloop import IOLoop
 from tornado.iostream import StreamClosedError
-from sys import exc_info
-from os import path
+
+from bismuthcore.clientcommands import ClientCommands
+from bismuthcore.helpers import BismuthBase
+from bismuthcore.messages.coremessages import VersionMessage
 
 # from sys import exit
 
 __version__ = '0.0.6'
 
-CORE_COMMANDS =('version', 'getversion', 'hello', 'mempool')
+CORE_COMMANDS = ('version', 'getversion', 'hello', 'mempool')
 
 
 class BismuthNode(BismuthBase):
-    """Main Bismuth node class. Should probably be a network backend agnostic class"""
+    """Main Bismuth node class. Should probably be a network backend agnostic class. Not used ATM."""
 
     def __init__(self, app_log=None, config=None, verbose: bool=False,
                  com_backend_class_name: str='TornadoBackend'):
@@ -34,7 +35,8 @@ class BismuthNode(BismuthBase):
         self.connecting = False  # If true, manager tries to initiate outgoing connections to peers
         self.stop_event = aioprocessing.AioEvent()
         # load the backend class from the provided name
-        backend_class = getattr(importlib.import_module(f"bismuthcore.{com_backend_class_name.lower()}"), com_backend_class_name)
+        backend_class = getattr(importlib.import_module(f"bismuthcore.{com_backend_class_name.lower()}"),
+                                com_backend_class_name)
         self._com_backend = backend_class(self, app_log=app_log, config=config, verbose=verbose)
         self._client_commands = ClientCommands(self)
         self._check()
@@ -106,7 +108,7 @@ class BismuthNode(BismuthBase):
                 io_loop = IOLoop.current()
                 io_loop.spawn_callback(self.client_worker, ip, port)
 
-    async def client_worker(self, ip:str, port:int) -> None:
+    async def client_worker(self, ip: str, port: int) -> None:
         """Background co-routine handling outgoing connections to peers"""
         if ip in self._clients:
             return  # safety
@@ -164,7 +166,7 @@ class BismuthNode(BismuthBase):
                 self._com_backend.close_client(self._clients[ip]['client'])
                 del self._clients[ip]
                 self.app_log.debug("Status: Threads at {} / {}".format(self.thread_count()))
-            except:
+            except Exception:
                 pass
 
     async def process_legacy_command(self, command) -> None:

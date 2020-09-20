@@ -14,7 +14,7 @@ from Cryptodome.Hash import SHA
 
 from bismuthcore.compat import quantize_two, quantize_eight
 
-__version__ = '0.0.11'
+__version__ = '0.0.12'
 
 # Multiplier to convert floats to int
 DECIMAL_1E8 = Decimal(100000000)
@@ -46,7 +46,7 @@ class Transaction:
                  temp_amount: str=""):
         """Default constructor with binary, non verbose, parameters"""
         self.block_height = block_height
-        self.timestamp = timestamp
+        self.timestamp = float(timestamp)
         self.address = address
         self.recipient = recipient
         self.amount = amount
@@ -105,6 +105,7 @@ class Transaction:
         Create from legacy - verbose - parameters.
         Call as tx = Transaction.from_legacy_params(0, '', 0 ...)
         """
+        # print("TEMP TS TYPE", type(timestamp))  # str with regnet v2
         if type(amount) == float:
             amount = f'{amount:0.8f}'
         if type(fee) == float:
@@ -314,6 +315,7 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
+        timestamp = f"{self.timestamp:0.2f}"
         if legacy:
             if self.public_key == b"":
                 public_key = "0"  # Properly returns empty values, "0" to keep compatibility with legacy
@@ -324,14 +326,17 @@ class Transaction:
                         public_key = b64decode(public_key).decode('utf-8')
                     except Exception:
                         pass  # support new pubkey schemes
+                if len(self.public_key) > 128:
+                    # We have legacy rsa, renormalize and double encode
+                    public_key = b64encode(self.normalize_key(public_key).encode()).decode()
             signature = b64encode(self.signature).decode('utf-8') if self.signature else ''
             # Properly returns empty values
             block_hash = self.block_hash.hex()
-            return dict(zip(TRANSACTION_KEYS, (self.block_height, self.timestamp, self.address, self.recipient, amount,
+            return dict(zip(TRANSACTION_KEYS, (self.block_height, timestamp, self.address, self.recipient, amount,
                                                signature, public_key, block_hash, fee, reward,
                                                self.operation, self.openfield, 'Legacy')))
 
-        return dict(zip(TRANSACTION_KEYS, (self.block_height, self.timestamp, self.address, self.recipient, amount,
+        return dict(zip(TRANSACTION_KEYS, (self.block_height, timestamp, self.address, self.recipient, amount,
                                            self.signature, self.public_key, self.block_hash, fee, reward,
                                            self.operation, self.openfield, 'Bin')))
 
@@ -354,18 +359,22 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
+        timestamp = f"{self.timestamp:0.2f}"
         if simplified:
             public_key = b''
             signature = b''
         else:
             public_key = b64encode(self.public_key).decode('utf-8') if self.public_key else "0"
+            if len(self.public_key) > 128:
+                # We have legacy rsa, renormalize and double encode
+                public_key = b64encode(self.normalize_key(public_key).encode()).decode()
             # 0 to keep compatibility with legacy
             signature = b64encode(self.signature).decode('utf-8') if self.signature else "0"
         if simplified and self.block_height < 0:
             block_hash = b''
         else:
             block_hash = self.block_hash.hex()
-        return (self.block_height, self.timestamp, self.address, self.recipient, amount, signature, public_key,
+        return (self.block_height, timestamp, self.address, self.recipient, amount, signature, public_key,
                 block_hash, fee, reward, self.operation, self.openfield)
 
     @classmethod

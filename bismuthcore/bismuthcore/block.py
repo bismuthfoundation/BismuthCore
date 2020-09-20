@@ -54,6 +54,8 @@ class Block(TransactionsList):
         if not address_is_rsa(self.miner_tx.address):
             # Compare address rather than sig, as sig could be made up
             raise ValueError("Coinbase (Mining) transaction only supports legacy RSA Bismuth addresses")
+        # str / float with regnet v2
+        # print("TEMP TS TYPE", type(self.miner_tx.timestamp), type(self._last_block_timestamp))
         if self.miner_tx.timestamp <= self._last_block_timestamp:
             raise ValueError(f"!Block is older {self.miner_tx.timestamp} "
                              f"than the previous one {self._last_block_timestamp} , will be rejected")

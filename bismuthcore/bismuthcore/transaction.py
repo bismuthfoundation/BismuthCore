@@ -301,7 +301,7 @@ class Transaction:
     Exporters
     """
 
-    def to_dict(self, legacy: bool=False, decode_pubkey: bool=False):
+    def to_dict(self, legacy: bool=False, decode_pubkey: bool=False, normalize_pubkey: bool=True):
         """
         The transaction object as a Python dict with keys
         'block_height', 'timestamp', 'address', 'recipient', 'amount', 'signature', 'public_key',
@@ -326,9 +326,12 @@ class Transaction:
                         public_key = b64decode(public_key).decode('utf-8')
                     except Exception:
                         pass  # support new pubkey schemes
-                if len(self.public_key) > 128:
+                if normalize_pubkey and len(self.public_key) > 128:
                     # We have legacy rsa, renormalize and double encode
                     public_key = b64encode(self.normalize_key(public_key).encode()).decode()
+                    # public_key = self.normalize_key(public_key, glue="")
+                    # non encoded, single line pubkey for json format.
+                    # TODO: To Be confirmed for all cases - see test suite.
             signature = b64encode(self.signature).decode('utf-8') if self.signature else ''
             # Properly returns empty values
             block_hash = self.block_hash.hex()
@@ -378,13 +381,13 @@ class Transaction:
                 block_hash, fee, reward, self.operation, self.openfield)
 
     @classmethod
-    def normalize_key(cls, s: str) -> str:
+    def normalize_key(cls, s: str, glue="\n") -> str:
         """Re add boundaries and segment by 64 chars wide."""
         # Dup code with polysign
         chunks = [s[i:i + 64] for i in range(0, len(s), 64)]
         chunks.insert(0, "-----BEGIN PUBLIC KEY-----")
         chunks.append("-----END PUBLIC KEY-----")
-        return "\n".join(chunks)
+        return glue.join(chunks)
 
     def to_tuple_for_block_hash(self):
         # Needed for compatibility.

@@ -140,13 +140,20 @@ class Transaction:
         # Postponed, since pubkeys do not need to be stored for every address every time
         bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
         # print("bin public_key1", bin_public_key)
-        try:
-            # RSA pubkeys
-            bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"").replace(
-                b"-----BEGIN PUBLIC KEY-----\n", b"")
-            # print("bin public_key2", bin_public_key)
-            bin_public_key = b64decode(bin_public_key[:1068])
-        except Exception:
+        if len(bin_public_key) > 256:
+            # The previous decode attempt is not a reliable condition enough to detect an rsa sig.
+            # an ecdsa or ed25519 pubkey can be b64decodable...
+            try:
+                # RSA pubkeys
+                bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"").replace(
+                    b"-----BEGIN PUBLIC KEY-----\n", b"")
+                # print("bin public_key2", bin_public_key)
+                bin_public_key = b64decode(bin_public_key[:1068])
+                # print("bin public_key3", bin_public_key)
+            except Exception:
+                pass
+        else:
+            # print("bin public_key4", bin_public_key)
             pass
         # signature is b64 encoded in legacy format.
         bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
@@ -208,14 +215,14 @@ class Transaction:
         try:
             bin_public_key = b64decode(public_key[:1068]) if len(public_key) > 1 else b""
             # print("bin public_key1", bin_public_key)
-            bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"")\
-                .replace(b"-----BEGIN PUBLIC KEY-----\n", b"")
-            # print("bin public_key2", bin_public_key)
-            bin_public_key = b64decode(bin_public_key[:1068])
+            if len(bin_public_key) > 256:
+                bin_public_key = bin_public_key.replace(b"\n-----END PUBLIC KEY-----", b"")\
+                    .replace(b"-----BEGIN PUBLIC KEY-----\n", b"")
+                # print("bin public_key2", bin_public_key)
+                bin_public_key = b64decode(bin_public_key[:1068])
             # print("bin public_key3", bin_public_key)
         except Exception:
             pass
-
         bin_signature = b64decode(signature[:684]) if len(signature) > 1 else b""
         bin_block_hash = bytes.fromhex(block_hash) if len(block_hash) > 1 else b""
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,

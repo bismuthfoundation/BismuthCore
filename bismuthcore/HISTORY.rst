@@ -2,6 +2,11 @@
 History
 =======
 
+0.0.18 (2020-10-19)
+-------------------
+
+* Adjust types conversion for retro-compatibility
+
 0.0.17 (2020-09-24)
 -------------------
 

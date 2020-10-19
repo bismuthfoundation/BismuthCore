@@ -243,7 +243,7 @@ class Transaction:
         (block_height, timestamp, address, recipient, int_amount, bin_signature,
          bin_public_key, bin_block_hash, int_fee, int_reward, operation, openfield) = tx
         # print("bin public_key3 v2", bin_public_key)
-        #
+        # print("transaction.from v2", timestamp, type(timestamp))   # This is a float, good.
         return cls(block_height, timestamp, address, recipient, int_amount, bin_signature, bin_public_key,
                    bin_block_hash, int_fee, int_reward, operation, openfield, sanitize)
 
@@ -308,7 +308,8 @@ class Transaction:
     Exporters
     """
 
-    def to_dict(self, legacy: bool=False, decode_pubkey: bool=False, normalize_pubkey: bool=True):
+    def to_dict(self, legacy: bool=False, decode_pubkey: bool=False, normalize_pubkey: bool=True,
+                timestamp_as_str: bool=False):
         """
         The transaction object as a Python dict with keys
         'block_height', 'timestamp', 'address', 'recipient', 'amount', 'signature', 'public_key',
@@ -322,7 +323,12 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
-        timestamp = f"{self.timestamp:0.2f}"
+        timestamp = self.timestamp  # f"{self.timestamp:0.2f}"
+        if timestamp_as_str:
+            # Not consistent, but to keep compatibility with legacy.
+            # Mempool sends timstamp as str while chain sends as float.
+            timestamp = f"{self.timestamp:0.2f}"
+        # print("transaction.to_dict", self.timestamp, type(self.timestamp))  # float, needed for compat.
         if legacy:
             if self.public_key == b"":
                 public_key = "0"  # Properly returns empty values, "0" to keep compatibility with legacy
@@ -369,7 +375,7 @@ class Transaction:
         amount = Transaction.int_to_f8(self.amount)
         fee = Transaction.int_to_f8(self.fee)
         reward = Transaction.int_to_f8(self.reward)
-        timestamp = f"{self.timestamp:0.2f}"
+        timestamp = self.timestamp  # f"{self.timestamp:0.2f}"
         if simplified:
             public_key = b''
             signature = b''

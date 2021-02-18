@@ -2,6 +2,11 @@
 History
 =======
 
+0.0.19 (2021-02-18)
+-------------------
+
+* Avoid double fee on alias registration, edge case
+
 0.0.18 (2020-10-19)
 -------------------
 

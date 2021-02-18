@@ -14,7 +14,7 @@ from polysign.signerfactory import SignerFactory
 
 from bismuthcore.compat import quantize_eight
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 
 K1E8 = 100000000
@@ -71,9 +71,9 @@ def fee_calculate(openfield: str, operation: str='', block: int=0) -> Decimal:
     fee = Decimal("0.01") + (Decimal(len(openfield)) / Decimal("100000"))  # 0.01 dust
     if operation == "token:issue":
         fee = Decimal(fee) + Decimal("10")
-    if openfield.startswith("alias="):
-        fee = Decimal(fee) + Decimal("1")
     if operation == "alias:register":  # Take fee into account even if the protocol is not live yet.
+        fee = Decimal(fee) + Decimal("1")
+    elif openfield.startswith("alias="):
         fee = Decimal(fee) + Decimal("1")
     return quantize_eight(fee)
 
@@ -83,9 +83,9 @@ def fee_calculate_int(openfield: str, operation: str='', block: int=0) -> int:
     fee = K1E8 // 100 + len(openfield) * K1E8 // 100000  # 0.01 dust
     if operation == "token:issue":
         fee += 10 * K1E8
-    if openfield.startswith("alias="):
-        fee += K1E8
     if operation == "alias:register":  # Take fee into account even if the protocol is not live yet.
+        fee += K1E8
+    elif openfield.startswith("alias="):
         fee += K1E8
     return fee
 

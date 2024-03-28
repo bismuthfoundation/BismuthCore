@@ -8,15 +8,16 @@ import sqlite3
 import sys
 from os import remove
 
-sys.path.append('../')
+sys.path.append("../")
 from bismuthcore.transaction import Transaction
 
-SQL_CREATE = ('''
+SQL_CREATE = (
+    """
               CREATE TABLE "misc" (
                   `block_height`	INTEGER,
                   `difficulty`	TEXT
-              )''',
-              '''CREATE TABLE "transactions" (
+              )""",
+    """CREATE TABLE "transactions" (
                   `block_height`	INTEGER,
                   `timestamp`	NUMERIC,
                   `address`	TEXT,
@@ -29,27 +30,28 @@ SQL_CREATE = ('''
                   `reward`	INTEGER,
                   `operation`	TEXT,
                   `openfield`	TEXT
-              )''',
-              'CREATE INDEX `Timestamp Index` ON `transactions` (`timestamp`)',
-              'CREATE INDEX `Signature Index` ON `transactions` (`signature`)',
-              'CREATE INDEX `Reward Index` ON `transactions` (`reward`)',
-              'CREATE INDEX `Recipient Index` ON `transactions` (`recipient`)',
-              'CREATE INDEX `Openfield Index` ON `transactions` (`openfield`)',
-              'CREATE INDEX `Fee Index` ON `transactions` (`fee`)',
-              'CREATE INDEX `Block Height Index` ON `transactions` (`block_height`)',
-              'CREATE INDEX `Block Hash Index` ON `transactions` (`block_hash`)',
-              'CREATE INDEX `Amount Index` ON `transactions` (`amount`)',
-              'CREATE INDEX `Address Index` ON `transactions` (`address`)',
-              'CREATE INDEX `Operation Index` ON `transactions` (`operation`)',
+              )""",
+    "CREATE INDEX `Timestamp Index` ON `transactions` (`timestamp`)",
+    "CREATE INDEX `Signature Index` ON `transactions` (`signature`)",
+    "CREATE INDEX `Reward Index` ON `transactions` (`reward`)",
+    "CREATE INDEX `Recipient Index` ON `transactions` (`recipient`)",
+    "CREATE INDEX `Openfield Index` ON `transactions` (`openfield`)",
+    "CREATE INDEX `Fee Index` ON `transactions` (`fee`)",
+    "CREATE INDEX `Block Height Index` ON `transactions` (`block_height`)",
+    "CREATE INDEX `Block Hash Index` ON `transactions` (`block_hash`)",
+    "CREATE INDEX `Amount Index` ON `transactions` (`amount`)",
+    "CREATE INDEX `Address Index` ON `transactions` (`address`)",
+    "CREATE INDEX `Operation Index` ON `transactions` (`operation`)",
 )
 
 
-SQL_CREATE_LEGACY = ('''
+SQL_CREATE_LEGACY = (
+    """
                      CREATE TABLE "misc" (
                          `block_height`	INTEGER,
                          `difficulty`	TEXT
-                     )''',
-                     '''CREATE TABLE "transactions" (
+                     )""",
+    """CREATE TABLE "transactions" (
                          `block_height`	INTEGER,
                          `timestamp`	NUMERIC,
                          `address`	TEXT,
@@ -62,19 +64,19 @@ SQL_CREATE_LEGACY = ('''
                          `reward`	NUMERIC,
                          `operation`	TEXT,
                          `openfield`	TEXT
-                     )''',
-                     'CREATE INDEX `Timestamp Index` ON `transactions` (`timestamp`)',
-                     'CREATE INDEX `Signature Index` ON `transactions` (`signature`)',
-                     'CREATE INDEX `Reward Index` ON `transactions` (`reward`)',
-                     'CREATE INDEX `Recipient Index` ON `transactions` (`recipient`)',
-                     'CREATE INDEX `Openfield Index` ON `transactions` (`openfield`)',
-                     'CREATE INDEX `Fee Index` ON `transactions` (`fee`)',
-                     'CREATE INDEX `Block Height Index` ON `transactions` (`block_height`)',
-                     'CREATE INDEX `Block Hash Index` ON `transactions` (`block_hash`)',
-                     'CREATE INDEX `Amount Index` ON `transactions` (`amount`)',
-                     'CREATE INDEX `Address Index` ON `transactions` (`address`)',
-                     'CREATE INDEX `Operation Index` ON `transactions` (`operation`)',
-                     )
+                     )""",
+    "CREATE INDEX `Timestamp Index` ON `transactions` (`timestamp`)",
+    "CREATE INDEX `Signature Index` ON `transactions` (`signature`)",
+    "CREATE INDEX `Reward Index` ON `transactions` (`reward`)",
+    "CREATE INDEX `Recipient Index` ON `transactions` (`recipient`)",
+    "CREATE INDEX `Openfield Index` ON `transactions` (`openfield`)",
+    "CREATE INDEX `Fee Index` ON `transactions` (`fee`)",
+    "CREATE INDEX `Block Height Index` ON `transactions` (`block_height`)",
+    "CREATE INDEX `Block Hash Index` ON `transactions` (`block_hash`)",
+    "CREATE INDEX `Amount Index` ON `transactions` (`amount`)",
+    "CREATE INDEX `Address Index` ON `transactions` (`address`)",
+    "CREATE INDEX `Operation Index` ON `transactions` (`operation`)",
+)
 
 
 def create(db, sql: tuple):
@@ -84,28 +86,34 @@ def create(db, sql: tuple):
 
 
 if __name__ == "__main__":
-
     try:
-        remove('ledger_new.db')
+        remove("ledger_new.db")
     except:
         pass
     try:
-        remove('ledger_legacy.db')
+        remove("ledger_legacy.db")
     except:
         pass
-    test_new = sqlite3.connect('ledger_new.db', timeout=1)
+    test_new = sqlite3.connect("ledger_new.db", timeout=1)
     create(test_new, SQL_CREATE)
-    test_legacy = sqlite3.connect('ledger_legacy.db', timeout=1)
+    test_legacy = sqlite3.connect("ledger_legacy.db", timeout=1)
     create(test_legacy, SQL_CREATE_LEGACY)
 
-    with sqlite3.connect('../../../Bismuth-temp/static/ledger.db', timeout=1) as ledger:
+    with sqlite3.connect("../../../Bismuth-temp/static/ledger.db", timeout=1) as ledger:
         ledger.text_factory = str
-        res = ledger.execute("select * from transactions where block_height > 700000 limit 100000")
+        res = ledger.execute(
+            "select * from transactions where block_height > 700000 limit 100000"
+        )
         for row in res:
             tx = Transaction.from_legacy(row)
-            test_legacy.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", row)
-            tx.public_key = b''
-            test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_bin_tuple())
+            test_legacy.execute(
+                "INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", row
+            )
+            tx.public_key = b""
+            test_new.execute(
+                "INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                tx.to_bin_tuple(),
+            )
     test_new.commit()
     test_new.close()
     test_legacy.commit()
@@ -123,4 +131,3 @@ Indexes
 - new (no pubkey)   243277824
 - new (dup pubkeys) 294117376
 """
-

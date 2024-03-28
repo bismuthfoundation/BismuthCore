@@ -7,7 +7,7 @@ These are the core commands used by the client and wallets, but not part of the 
 from time import time
 from bismuthcore.helpers import Commands
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 
 class ClientCommands(Commands):

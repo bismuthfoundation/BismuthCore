@@ -11,41 +11,49 @@ import json
 from os import path
 from bismuthclient import bismuthcrypto
 from Cryptodome.PublicKey import RSA
-# from Cryptodome.Signature import PKCS1_v1_5
+# from Cryptodome.Signature import PKCS1_v1_5
 # from Cryptodome.Hash import SHA
-# import getpass
+# import getpass
 # import hashlib
 
-__version__ = '0.0.41'
+__version__ = "0.0.41"
 
 
-class BismuthWallet():
+class BismuthWallet:
+    __slots__ = (
+        "_address",
+        "_wallet_file",
+        "verbose",
+        "_encrypted",
+        "_infos",
+        "verbose",
+        "key",
+        "public_key",
+    )
 
-    __slots__ = ('_address', '_wallet_file', 'verbose', '_encrypted', '_infos', "verbose", "key", "public_key")
-
-    def __init__(self, wallet_file='wallet.der', verbose=False):
+    def __init__(self, wallet_file="wallet.der", verbose=False):
         self._wallet_file = None
         self._address = None
         self._infos = None
         self.key = None
-        self.public_key = ''
+        self.public_key = ""
         self.verbose = verbose
         self.load(wallet_file)
 
-    def wallet_preview(self, wallet_file='wallet.der'):
+    def wallet_preview(self, wallet_file="wallet.der"):
         """
         Returns info about a wallet without actually loading it.
         """
-        info = {'file': wallet_file, 'address': '', 'encrypted': False}
+        info = {"file": wallet_file, "address": "", "encrypted": False}
         try:
-            with open(wallet_file, 'r') as f:
+            with open(wallet_file, "r") as f:
                 content = json.load(f)
-            info['address'] = content['Address']  # Warning case change!!!
+            info["address"] = content["Address"]  # Warning case change!!!
             try:
-                key = RSA.importKey(content['Private Key'])
-                info['encrypted'] = False
+                key = RSA.importKey(content["Private Key"])
+                info["encrypted"] = False
             except:  # encrypted
-                info['encrypted'] = True
+                info["encrypted"] = True
         except:
             pass
         return info
@@ -57,7 +65,7 @@ class BismuthWallet():
         """
         return self._infos
 
-    def load(self, wallet_file='wallet.der'):
+    def load(self, wallet_file="wallet.der"):
         """
         Loads the wallet.der file
 
@@ -67,22 +75,22 @@ class BismuthWallet():
             print("Load", wallet_file)
         self._wallet_file = None
         self._address = None
-        self._infos = {"address": '', 'file': wallet_file, 'encrypted': False}
+        self._infos = {"address": "", "file": wallet_file, "encrypted": False}
         if not path.isfile(wallet_file):
             return
 
         self._wallet_file = wallet_file
-        with open(wallet_file, 'r') as f:
+        with open(wallet_file, "r") as f:
             content = json.load(f)
-            self._infos['address'] = content['Address']  # Warning case change!!!
-            self._address = content['Address']
+            self._infos["address"] = content["Address"]  # Warning case change!!!
+            self._address = content["Address"]
         try:
-            self.key = RSA.importKey(content['Private Key'])
-            self.public_key = content['Public Key']
+            self.key = RSA.importKey(content["Private Key"])
+            self.public_key = content["Public Key"]
         except:  # encrypted
-            self._infos['encrypted'] = True
+            self._infos["encrypted"] = True
 
-    def new(self, wallet_file='wallet.der'):
+    def new(self, wallet_file="wallet.der"):
         """
         Creates a new wallet - only if the given file does not exist yet.
         Does not load it.
@@ -98,7 +106,6 @@ class BismuthWallet():
             return False
         bismuthcrypto.keys_new(wallet_file)
         return True
-
 
     @property
     def address(self):

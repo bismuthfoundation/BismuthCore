@@ -2,7 +2,6 @@
 
 """Main module."""
 
-
 import asyncio
 import importlib
 from os import path
@@ -19,25 +18,36 @@ from bismuthcore.messages.coremessages import VersionMessage
 
 # from sys import exit
 
-__version__ = '0.0.6'
+__version__ = "0.0.6"
 
-CORE_COMMANDS = ('version', 'getversion', 'hello', 'mempool')
+CORE_COMMANDS = ("version", "getversion", "hello", "mempool")
 
 
 class BismuthNode(BismuthBase):
     """Main Bismuth node class. Should probably be a network backend agnostic class. Not used ATM."""
 
-    def __init__(self, app_log=None, config=None, verbose: bool=False,
-                 com_backend_class_name: str='TornadoBackend'):
+    def __init__(
+        self,
+        app_log=None,
+        config=None,
+        verbose: bool = False,
+        com_backend_class_name: str = "TornadoBackend",
+    ):
         """Init the node components"""
         super().__init__(app_log, config, verbose)
         self.startup_time = time()
-        self.connecting = False  # If true, manager tries to initiate outgoing connections to peers
+        self.connecting = (
+            False  # If true, manager tries to initiate outgoing connections to peers
+        )
         self.stop_event = aioprocessing.AioEvent()
         # load the backend class from the provided name
-        backend_class = getattr(importlib.import_module(f"bismuthcore.{com_backend_class_name.lower()}"),
-                                com_backend_class_name)
-        self._com_backend = backend_class(self, app_log=app_log, config=config, verbose=verbose)
+        backend_class = getattr(
+            importlib.import_module(f"bismuthcore.{com_backend_class_name.lower()}"),
+            com_backend_class_name,
+        )
+        self._com_backend = backend_class(
+            self, app_log=app_log, config=config, verbose=verbose
+        )
         self._client_commands = ClientCommands(self)
         self._check()
         self._clients = {}  # outgoing connections
@@ -101,7 +111,12 @@ class BismuthNode(BismuthBase):
         # Early exits allow to limit indentation levels and is more readable.
         if len(self._clients) >= self.config.node_out_limit:
             return
-        for peer in [('35.227.90.114', 2829), ('51.15.97.143', 2829), ('163.172.163.4', 2829), ('94.113.207.67', 2829)]:
+        for peer in [
+            ("35.227.90.114", 2829),
+            ("51.15.97.143", 2829),
+            ("163.172.163.4", 2829),
+            ("94.113.207.67", 2829),
+        ]:
             # TODO: take from file ofc
             ip, port = peer
             if ip not in self._clients:
@@ -119,35 +134,37 @@ class BismuthNode(BismuthBase):
             self.app_log.warning(f"IP {ip} is banned, won't connect")
             return
         """
-        if 'connections' in self.config.log_components:
+        if "connections" in self.config.log_components:
             self.app_log.info(f"Trying to reach out to {ip}:{port}.")
         try:
-            self._clients[ip] = {'client': None}
+            self._clients[ip] = {"client": None}
             # TODO: possible to have a different backend depending on the port?
             client = await self._com_backend.get_client(ip, str(port))
             if not client.connected:
                 return
-            self._clients[ip] = {'client': client}
+            self._clients[ip] = {"client": client}
             self.app_log.debug(f"Status: Threads at {self.thread_count()}")
             # TODO: extend client object to store all what needed, use straight key => client
             # Communication starter
             message = VersionMessage(self.config.node_version)
             await client.command(message)
-            self.app_log.debug(f"Sent version {self.config.node_version} to {ip}:{port}, got {message}")
+            self.app_log.debug(
+                f"Sent version {self.config.node_version} to {ip}:{port}, got {message}"
+            )
             # if answer.valid:  # Make command and answer objects with no presupposed transport format
             if message.valid_answer():
-                print('valid')
+                print("valid")
             else:
-                print('invalid')
+                print("invalid")
                 return
 
             while client.connected:
-                if 'connections' in self.config.log_components:
+                if "connections" in self.config.log_components:
                     self.app_log.info(f"Still connected to {ip}:{port}.")
                 await self._async_wait()
 
         except StreamClosedError as e:
-            if 'connections' in self.config.log_components:
+            if "connections" in self.config.log_components:
                 self.app_log.warning(f"Lost connection to {ip}:{port} because '{e}'.")
                 return
             # TODO: add to wait list not to try again too soon
@@ -157,15 +174,19 @@ class BismuthNode(BismuthBase):
             # TODO: we may factorize that in an helper
             exc_type, exc_obj, exc_tb = exc_info()
             fname = path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.app_log.debug(f"client_worker: Unexpected '{exc_type}' fname '{fname}' line {exc_tb.tb_lineno}.")
+            self.app_log.debug(
+                f"client_worker: Unexpected '{exc_type}' fname '{fname}' line {exc_tb.tb_lineno}."
+            )
             return
         finally:
             try:
                 # We could keep it and set to inactive, but is it useful? could grow too much
                 # use a timeout?
-                self._com_backend.close_client(self._clients[ip]['client'])
+                self._com_backend.close_client(self._clients[ip]["client"])
                 del self._clients[ip]
-                self.app_log.debug("Status: Threads at {} / {}".format(self.thread_count()))
+                self.app_log.debug(
+                    "Status: Threads at {} / {}".format(self.thread_count())
+                )
             except Exception:
                 pass
 
@@ -176,18 +197,20 @@ class BismuthNode(BismuthBase):
         TODO: make command an object
         """
         try:
-            self.app_log.info(f"Got Legacy command {command['command']} from {command['connector'].ip}.")
-            if command['command'] in ClientCommands.commands:
+            self.app_log.info(
+                f"Got Legacy command {command['command']} from {command['connector'].ip}."
+            )
+            if command["command"] in ClientCommands.commands:
                 await self._client_commands.process_legacy(command)
                 return
-            elif command['command'] not in CORE_COMMANDS:
+            elif command["command"] not in CORE_COMMANDS:
                 self.app_log.warning(f"Got unknown command '{command['command']}''")
             # TODO: process core commands hereafter
 
         except Exception as e:
             self.app_log.warning(f"Error {e} in process_legacy_command")
 
-    def connect(self, connect: bool=True) -> None:
+    def connect(self, connect: bool = True) -> None:
         """If connect is True, manager will try to connect to peers."""
         self.connecting = connect
 
@@ -196,7 +219,7 @@ class BismuthNode(BismuthBase):
         # TODO: add other servers count, too
         return self._com_backend.thread_count()
 
-    async def _async_wait(self, seconds: int=0) -> None:
+    async def _async_wait(self, seconds: int = 0) -> None:
         if not seconds:
             seconds = self.config.node_pause
         for i in range(seconds):

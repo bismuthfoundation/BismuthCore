@@ -16,19 +16,27 @@ LTIMEOUT = 45
 SLEN = 10
 
 
-__version__ = '0.1.10'
+__version__ = "0.1.10"
 
 
 class Connection(object):
     """Connection to a Bismuth Node. Handles auto reconnect when needed"""
 
-    __slots__ = ('ipport', 'verbose', 'sdef', 'stats', 'last_activity', 'command_lock', 'raw')
+    __slots__ = (
+        "ipport",
+        "verbose",
+        "sdef",
+        "stats",
+        "last_activity",
+        "command_lock",
+        "raw",
+    )
 
     def __init__(self, ipport, verbose=False, raw=False):
         """ipport is an (ip, port) tuple"""
         self.ipport = ipport
-        if ':' in ipport:
-            ip, port = ipport.split(':')
+        if ":" in ipport:
+            ip, port = ipport.split(":")
             self.ipport = (ip, int(port))
         self.verbose = verbose
         self.raw = raw
@@ -58,10 +66,14 @@ class Connection(object):
             self.sdef.settimeout(LTIMEOUT)
             # Make sure the packet is sent in one call
             sdata = str(json.dumps(data))
-            res = self.sdef.sendall(str(len(sdata)).encode("utf-8").zfill(slen)+sdata.encode("utf-8"))
+            res = self.sdef.sendall(
+                str(len(sdata)).encode("utf-8").zfill(slen) + sdata.encode("utf-8")
+            )
             if self.raw:
                 print("sending raw:")
-                print(str(len(sdata)).encode("utf-8").zfill(slen)+sdata.encode("utf-8"))
+                print(
+                    str(len(sdata)).encode("utf-8").zfill(slen) + sdata.encode("utf-8")
+                )
             self.last_activity = time.time()
             # res is always 0 on linux
             if self.verbose:
@@ -82,7 +94,10 @@ class Connection(object):
             try:
                 self.sdef.settimeout(LTIMEOUT)
                 # Make sure the packet is sent in one call
-                self.sdef.sendall(str(len(str(json.dumps(data)))).encode("utf-8").zfill(slen)+str(json.dumps(data)).encode("utf-8"))
+                self.sdef.sendall(
+                    str(len(str(json.dumps(data)))).encode("utf-8").zfill(slen)
+                    + str(json.dumps(data)).encode("utf-8")
+                )
                 return True
             except Exception as e:
                 self.close()
@@ -116,8 +131,8 @@ class Connection(object):
                 bytes_recd = bytes_recd + len(chunk)
             self.last_activity = time.time()
             if self.raw:
-                print(raw + b''.join(chunks))
-            segments = b''.join(chunks).decode("utf-8")
+                print(raw + b"".join(chunks))
+            segments = b"".join(chunks).decode("utf-8")
             return json.loads(segments)
         except Exception as e:
             """

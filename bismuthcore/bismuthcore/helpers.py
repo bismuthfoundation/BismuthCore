@@ -14,14 +14,16 @@ from polysign.signerfactory import SignerFactory
 
 from bismuthcore.compat import quantize_eight
 
-__version__ = '0.0.8'
+__version__ = "0.0.8"
 
 
 K1E8 = 100000000
 
 
 def py_version():
-    return int(str(version_info.major) + str(version_info.minor) + str(version_info.micro))
+    return int(
+        str(version_info.major) + str(version_info.minor) + str(version_info.micro)
+    )
 
 
 def base_app_log(app_log=None):
@@ -37,9 +39,9 @@ def base_app_log(app_log=None):
 class BismuthBase:
     """Base class for every core object needing app_log and config."""
 
-    __slots__ = ('app_log', 'verbose', 'config')
+    __slots__ = ("app_log", "verbose", "config")
 
-    def __init__(self, app_log=None, config=None, verbose: bool=False):
+    def __init__(self, app_log=None, config=None, verbose: bool = False):
         """Init and set defaults with fallback"""
         self.app_log = base_app_log(app_log)
         self.verbose = verbose
@@ -47,7 +49,6 @@ class BismuthBase:
 
 
 class Commands(ABC):
-
     commands = None
 
     def __init__(self, node):
@@ -66,24 +67,28 @@ Migrated from essentials
 """
 
 
-def fee_calculate(openfield: str, operation: str='', block: int=0) -> Decimal:
+def fee_calculate(openfield: str, operation: str = "", block: int = 0) -> Decimal:
     # block var is no more needed, kept for interface retro compatibility
     fee = Decimal("0.01") + (Decimal(len(openfield)) / Decimal("100000"))  # 0.01 dust
     if operation == "token:issue":
         fee = Decimal(fee) + Decimal("10")
-    if operation == "alias:register":  # Take fee into account even if the protocol is not live yet.
+    if (
+        operation == "alias:register"
+    ):  # Take fee into account even if the protocol is not live yet.
         fee = Decimal(fee) + Decimal("1")
     elif openfield.startswith("alias="):
         fee = Decimal(fee) + Decimal("1")
     return quantize_eight(fee)
 
 
-def fee_calculate_int(openfield: str, operation: str='', block: int=0) -> int:
+def fee_calculate_int(openfield: str, operation: str = "", block: int = 0) -> int:
     # block var is no more needed, kept for interface retro compatibility
     fee = K1E8 // 100 + len(openfield) * K1E8 // 100000  # 0.01 dust
     if operation == "token:issue":
         fee += 10 * K1E8
-    if operation == "alias:register":  # Take fee into account even if the protocol is not live yet.
+    if (
+        operation == "alias:register"
+    ):  # Take fee into account even if the protocol is not live yet.
         fee += K1E8
     elif openfield.startswith("alias="):
         fee += K1E8
@@ -91,7 +96,7 @@ def fee_calculate_int(openfield: str, operation: str='', block: int=0) -> int:
 
 
 def just_int_from(s):
-    return int(''.join(i for i in s if i.isdigit()))
+    return int("".join(i for i in s if i.isdigit()))
 
 
 def download_file(url: str, filename: str) -> None:
@@ -103,9 +108,9 @@ def download_file(url: str, filename: str) -> None:
     returns `filename`
     """
     r = requests.get(url, stream=True)
-    total_size = int(r.headers.get('content-length')) / 1024
+    total_size = int(r.headers.get("content-length")) / 1024
 
-    with open(filename, 'wb') as fp:
+    with open(filename, "wb") as fp:
         chunkno = 0
         for chunk in r.iter_content(chunk_size=1024):
             if chunk:
@@ -147,8 +152,8 @@ DECIMAL_1E8 = Decimal(100000000)
 
 
 def int_to_f8(an_int: int):
-    """Helper function to convert an int amount - inner format - to legacy string 0.8f """
-    return str('{:.8f}'.format(Decimal(an_int) / DECIMAL_1E8))
+    """Helper function to convert an int amount - inner format - to legacy string 0.8f"""
+    return str("{:.8f}".format(Decimal(an_int) / DECIMAL_1E8))
 
 
 def f8_to_int(a_str: str):
@@ -162,12 +167,23 @@ def native_tx_to_bin_sqlite(tx):
     :param tx:
     :return:
     """
-    return (tx[0], tx[1], tx[2], tx[3], f8_to_int(tx[4]), Binary(b64decode(tx[5])),
-            Binary(b64decode(tx[6])), Binary(b64decode(tx[7])), f8_to_int(tx[8]), f8_to_int(tx[9]), tx[10], tx[11])
+    return (
+        tx[0],
+        tx[1],
+        tx[2],
+        tx[3],
+        f8_to_int(tx[4]),
+        Binary(b64decode(tx[5])),
+        Binary(b64decode(tx[6])),
+        Binary(b64decode(tx[7])),
+        f8_to_int(tx[8]),
+        f8_to_int(tx[9]),
+        tx[10],
+        tx[11],
+    )
 
 
 class TxConverter:
-
     @staticmethod
     def native_tx_to_bin_sqlite(tx):
         """
@@ -175,5 +191,17 @@ class TxConverter:
         :param tx:
         :return:
         """
-        return (tx[0], tx[1], tx[2], tx[3], f8_to_int(tx[4]), Binary(b64decode(tx[5])),
-                Binary(b64decode(tx[6])), Binary(b64decode(tx[7])), f8_to_int(tx[8]), f8_to_int(tx[9]), tx[10], tx[11])
+        return (
+            tx[0],
+            tx[1],
+            tx[2],
+            tx[3],
+            f8_to_int(tx[4]),
+            Binary(b64decode(tx[5])),
+            Binary(b64decode(tx[6])),
+            Binary(b64decode(tx[7])),
+            f8_to_int(tx[8]),
+            f8_to_int(tx[9]),
+            tx[10],
+            tx[11],
+        )

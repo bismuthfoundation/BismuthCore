@@ -11,10 +11,11 @@ def timeit(method):
         ts = time()
         result = method(*args, **kw)
         te = time()
-        if 'log_time' in kw:
-            name = kw.get('log_name', method.__name__.upper())
-            kw['log_time'][name] = int((te - ts) * 1000)
+        if "log_time" in kw:
+            name = kw.get("log_name", method.__name__.upper())
+            kw["log_time"][name] = int((te - ts) * 1000)
         else:
             print("{}  {:2.6f} s".format(method.__name__, te - ts))
         return result
+
     return timed

@@ -1,4 +1,3 @@
-
 """
 Bismuth core Block Class
 """
@@ -19,9 +18,21 @@ class Block(TransactionsList):
     Holds a single block only, and can provide extra info about the block"""
 
     # Inner storage is compact, binary form
-    __slots__ = ('computed', '_tokens_operation_present', '_last_block_timestamp', 'mining_reward')
+    __slots__ = (
+        "computed",
+        "_tokens_operation_present",
+        "_last_block_timestamp",
+        "mining_reward",
+    )
 
-    def __init__(self, transactions: List[Transaction], compute: bool=False, check_txs: bool=False, last_block_timestamp=0, mining_reward: int=0):
+    def __init__(
+        self,
+        transactions: List[Transaction],
+        compute: bool = False,
+        check_txs: bool = False,
+        last_block_timestamp=0,
+        mining_reward: int = 0,
+    ):
         """Default constructor with list of binary, non verbose,
         Transactions instances, mining transaction at the end."""
         super().__init__(transactions)
@@ -41,7 +52,7 @@ class Block(TransactionsList):
         for transaction in self.transactions:
             # if transaction.operation in ["token:issue", "token:transfer"]:
             if transaction.operation.startswith("token"):
-                    self._tokens_operation_present = True
+                self._tokens_operation_present = True
 
         self.computed = True
 
@@ -53,12 +64,16 @@ class Block(TransactionsList):
             raise ValueError("Coinbase (Mining) transaction must have zero amount")
         if not address_is_rsa(self.miner_tx.address):
             # Compare address rather than sig, as sig could be made up
-            raise ValueError("Coinbase (Mining) transaction only supports legacy RSA Bismuth addresses")
+            raise ValueError(
+                "Coinbase (Mining) transaction only supports legacy RSA Bismuth addresses"
+            )
         # str / float with regnet v2
         # print("TEMP TS TYPE", type(self.miner_tx.timestamp), type(self._last_block_timestamp))
         if self.miner_tx.timestamp <= self._last_block_timestamp:
-            raise ValueError(f"!Block is older {self.miner_tx.timestamp} "
-                             f"than the previous one {self._last_block_timestamp} , will be rejected")
+            raise ValueError(
+                f"!Block is older {self.miner_tx.timestamp} "
+                f"than the previous one {self._last_block_timestamp} , will be rejected"
+            )
         signature_list = set()
         for transaction in self.transactions:
             # if transaction.operation in ["token:issue", "token:transfer"]:
@@ -66,10 +81,12 @@ class Block(TransactionsList):
                 raise ValueError("Missing signature")
             signature_list.add(transaction.signature)
             if transaction.operation.startswith("token"):
-                    self._tokens_operation_present = True
+                self._tokens_operation_present = True
             if transaction.timestamp > start_time:
-                raise ValueError(f"Future transaction not allowed, timestamp "
-                                 f"{((transaction.timestamp - start_time) / 60):0.2f} minutes in the future")
+                raise ValueError(
+                    f"Future transaction not allowed, timestamp "
+                    f"{((transaction.timestamp - start_time) / 60):0.2f} minutes in the future"
+                )
             if self._last_block_timestamp - 86400 > transaction.timestamp:
                 raise ValueError("Transaction older than 24h not allowed.")
         if len(self.transactions) != len(signature_list):
@@ -103,9 +120,12 @@ class Block(TransactionsList):
                                                b64encode(transaction.public_key).decode('utf-8'),
                                                buffer2, transaction.address)
             """
-            SignerFactory.verify_bis_signature_raw(transaction.signature,
-                                               transaction.public_key,
-                                               buffer2, transaction.address)
+            SignerFactory.verify_bis_signature_raw(
+                transaction.signature,
+                transaction.public_key,
+                buffer2,
+                transaction.address,
+            )
             # TODO: node log
             # print(f"Valid signature from {transaction.address} to {transaction.recipient} amount {Transaction.int_to_f8(transaction.amount)}")
             """
@@ -132,7 +152,7 @@ class Block(TransactionsList):
         return self.transactions[-1]
 
     @property
-    def height(self)-> int:
+    def height(self) -> int:
         return self.transactions[-1].block_height
 
     def set_height(self, height: int) -> None:

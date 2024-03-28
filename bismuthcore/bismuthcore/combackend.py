@@ -5,13 +5,13 @@ Communication classes ancestors.
 from abc import ABC, abstractmethod
 from bismuthcore.helpers import base_app_log
 
-__version__ = '0.0.6'
+__version__ = "0.0.6"
 
 
 class ComClient(ABC):
     """Abstract Ancestor for Communication clients. Used for outgoing connections."""
 
-    def __init__(self, config, host: str = '', port: int = 0, app_log=None):
+    def __init__(self, config, host: str = "", port: int = 0, app_log=None):
         self.app_log = base_app_log(app_log)
         self.is_async = True  # Tells whether this backend is async or not (else it would be threaded).
         self.config = config
@@ -19,7 +19,7 @@ class ComClient(ABC):
         self.host = host
 
     @abstractmethod
-    def connect(self, host: str = '', port: int = 0) -> None:
+    def connect(self, host: str = "", port: int = 0) -> None:
         pass
 
     @abstractmethod
@@ -27,7 +27,7 @@ class ComClient(ABC):
         pass
 
     @abstractmethod
-    async def command(self, data:str, param: list=None):
+    async def command(self, data: str, param: list = None):
         pass
 
 
@@ -40,8 +40,8 @@ class ComBackend(ABC):
         self.node = node
         self.verbose = verbose
         self.config = config
-        self.port = config.get('node_port')
-        self.address = config.get('node_address')
+        self.port = config.get("node_port")
+        self.address = config.get("node_address")
 
     @abstractmethod
     def serve(self) -> None:
@@ -66,9 +66,9 @@ class ComBackend(ABC):
 class Connector(ABC):
     """A Connector is a "channel" to send info back to the peer. It's backend agnostic."""
 
-    __slots__ = ('ip', 'app_log')
+    __slots__ = ("ip", "app_log")
 
-    def __init__(self, app_log=None, ip: str=''):
+    def __init__(self, app_log=None, ip: str = ""):
         self.app_log = base_app_log(app_log)
         self.ip = ip
 

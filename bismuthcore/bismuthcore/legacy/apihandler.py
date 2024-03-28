@@ -22,7 +22,7 @@ class ApiHandler:
     It's called from client threads, so it has to be thread safe.
     """
 
-    __slots__ = ('app_log', 'config', 'callback_lock', 'callbacks')
+    __slots__ = ("app_log", "config", "callback_lock", "callbacks")
 
     def __init__(self, app_log, config=None):
         self.app_log = app_log
@@ -50,4 +50,3 @@ class ApiHandler:
         except AttributeError:
             self.app_log.warning("API Method <{}> does not exist.".format(method))
             return False
-

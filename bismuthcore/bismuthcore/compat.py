@@ -4,9 +4,9 @@ Old methods needed for compatibility and benchmark reasons
 
 from decimal import Decimal
 
-DECIMAL_ZERO_2DP = Decimal('0.00')
-DECIMAL_ZERO_8DP = Decimal('0.00000000')
-DECIMAL_ZERO_10DP = Decimal('0.0000000000')
+DECIMAL_ZERO_2DP = Decimal("0.00")
+DECIMAL_ZERO_8DP = Decimal("0.00000000")
+DECIMAL_ZERO_10DP = Decimal("0.0000000000")
 
 
 def quantize_two(value) -> Decimal:
@@ -35,5 +35,4 @@ def quantize_ten(value) -> Decimal:
 
 
 def bin_convert(string: str):
-    return ''.join(format(ord(x), '8b').replace(' ', '0') for x in string)
-
+    return "".join(format(ord(x), "8b").replace(" ", "0") for x in string)

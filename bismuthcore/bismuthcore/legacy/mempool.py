@@ -49,39 +49,45 @@ Common Sql requests
 """
 
 # Create mempool table
-SQL_CREATE = "CREATE TABLE IF NOT EXISTS transactions (" \
-             "timestamp TEXT, address TEXT, recipient TEXT, amount TEXT, signature TEXT, " \
-             "public_key TEXT, operation TEXT, openfield TEXT, mergedts INTEGER)"
+SQL_CREATE = (
+    "CREATE TABLE IF NOT EXISTS transactions ("
+    "timestamp TEXT, address TEXT, recipient TEXT, amount TEXT, signature TEXT, "
+    "public_key TEXT, operation TEXT, openfield TEXT, mergedts INTEGER)"
+)
 
 # Purge old txs that may be stuck
-SQL_PURGE = "DELETE FROM transactions WHERE timestamp <= strftime('%s', 'now', '-1 day')"
+SQL_PURGE = (
+    "DELETE FROM transactions WHERE timestamp <= strftime('%s', 'now', '-1 day')"
+)
 
 # Delete all transactions
 SQL_CLEAR = "DELETE FROM transactions"
 
 # Check for presence of a given tx signature
-SQL_SIG_CHECK = 'SELECT timestamp FROM transactions WHERE signature = ?'
+SQL_SIG_CHECK = "SELECT timestamp FROM transactions WHERE signature = ?"
 
 # delete a single tx
-SQL_DELETE_TX = 'DELETE FROM transactions WHERE signature = ?'
+SQL_DELETE_TX = "DELETE FROM transactions WHERE signature = ?"
 
 # Selects all tx from mempool - list fields so we don't send mergedts and keep compatibility
-SQL_SELECT_ALL_TXS = 'SELECT timestamp, address, recipient, amount, signature, public_key, operation, openfield FROM transactions'
+SQL_SELECT_ALL_TXS = "SELECT timestamp, address, recipient, amount, signature, public_key, operation, openfield FROM transactions"
 
 # Counts distinct senders from mempool
-SQL_COUNT_DISTINCT_SENDERS = 'SELECT COUNT(DISTINCT(address)) FROM transactions'
+SQL_COUNT_DISTINCT_SENDERS = "SELECT COUNT(DISTINCT(address)) FROM transactions"
 
 # Counts distinct recipients from mempool
-SQL_COUNT_DISTINCT_RECIPIENTS = 'SELECT COUNT(DISTINCT(recipient)) FROM transactions'
+SQL_COUNT_DISTINCT_RECIPIENTS = "SELECT COUNT(DISTINCT(recipient)) FROM transactions"
 
 # A single requets for status info
-SQL_STATUS = 'SELECT COUNT(*) AS nb, SUM(LENGTH(openfield)) AS len, COUNT(DISTINCT(address)) as senders, COUNT(DISTINCT(recipient)) as recipients FROM transactions'
+SQL_STATUS = "SELECT COUNT(*) AS nb, SUM(LENGTH(openfield)) AS len, COUNT(DISTINCT(address)) as senders, COUNT(DISTINCT(recipient)) as recipients FROM transactions"
 
 # Select Tx to be sent to a peer
-SQL_SELECT_TX_TO_SEND = 'SELECT * FROM transactions ORDER BY amount DESC'
+SQL_SELECT_TX_TO_SEND = "SELECT * FROM transactions ORDER BY amount DESC"
 
 # Select Tx to be sent to a peer since the given ts - what counts is the merged time, not the tx time.
-SQL_SELECT_TX_TO_SEND_SINCE = 'SELECT * FROM transactions where mergedts > ? ORDER BY amount DESC'
+SQL_SELECT_TX_TO_SEND_SINCE = (
+    "SELECT * FROM transactions where mergedts > ? ORDER BY amount DESC"
+)
 
 
 class Mempool:
@@ -93,7 +99,7 @@ class Mempool:
             self.config = config
             self.db_lock = db_lock
             self.ram = self.config.mempool_ram_conf
-            if self.config.version_conf == 'regnet':
+            if self.config.version_conf == "regnet":
                 self.app_log.warning("Regtest mode, ram mempool")
                 self.ram = True
 
@@ -125,10 +131,14 @@ class Mempool:
         self.app_log.warning("Mempool Check")
         with self.lock:
             if self.ram:
-                self.db = sqlite3.connect(self.mempool_ram_file,
-                                          uri=True, timeout=1, isolation_level=None,
-                                          check_same_thread=False)
-                self.db.execute('PRAGMA journal_mode = WAL;')
+                self.db = sqlite3.connect(
+                    self.mempool_ram_file,
+                    uri=True,
+                    timeout=1,
+                    isolation_level=None,
+                    check_same_thread=False,
+                )
+                self.db.execute("PRAGMA journal_mode = WAL;")
                 self.db.execute("PRAGMA page_size = 4096;")
                 self.db.text_factory = str
                 self.cursor = self.db.cursor()
@@ -136,8 +146,9 @@ class Mempool:
                 self.db.commit()
                 self.app_log.warning("Status: In memory mempool file created")
             else:
-                self.db = sqlite3.connect('mempool.db', timeout=1,
-                                          check_same_thread=False)
+                self.db = sqlite3.connect(
+                    "mempool.db", timeout=1, check_same_thread=False
+                )
                 self.db.text_factory = str
                 self.cursor = self.db.cursor()
 
@@ -148,8 +159,9 @@ class Mempool:
                 if len(res) != 9:
                     self.db.close()
                     os.remove("mempool.db")
-                    self.db = sqlite3.connect('mempool.db', timeout=1,
-                                              check_same_thread=False)
+                    self.db = sqlite3.connect(
+                        "mempool.db", timeout=1, check_same_thread=False
+                    )
                     self.db.text_factory = str
                     self.cursor = self.db.cursor()
                     self.execute(SQL_CREATE)
@@ -284,20 +296,30 @@ class Mempool:
         try:
             limit = time.time()
             frozen = [peer for peer in self.peers_sent if self.peers_sent[peer] > limit]
-            self.app_log.warning("Status: MEMPOOL Frozen = {}".format(", ".join(frozen)))
+            self.app_log.warning(
+                "Status: MEMPOOL Frozen = {}".format(", ".join(frozen))
+            )
             # print(limit, self.peers_sent, frozen)
             # Cleanup old nodes not synced since 15 min
             limit = limit - 15 * 60
             with self.peers_lock:
-                self.peers_sent = {peer: self.peers_sent[peer] for peer in self.peers_sent if
-                                   self.peers_sent[peer] > limit}
+                self.peers_sent = {
+                    peer: self.peers_sent[peer]
+                    for peer in self.peers_sent
+                    if self.peers_sent[peer] > limit
+                }
             self.app_log.warning(
-                "Status: MEMPOOL Live = {}".format(", ".join(set(self.peers_sent.keys()) - set(frozen))))
+                "Status: MEMPOOL Live = {}".format(
+                    ", ".join(set(self.peers_sent.keys()) - set(frozen))
+                )
+            )
             status = self.fetchall(SQL_STATUS)
             count, open_len, senders, recipients = status[0]
             self.app_log.warning(
-                "Status: MEMPOOL {} Txs from {} senders to {} distinct recipients. Openfield len {}".
-                    format(count, senders, recipients, open_len))
+                "Status: MEMPOOL {} Txs from {} senders to {} distinct recipients. Openfield len {}".format(
+                    count, senders, recipients, open_len
+                )
+            )
             return status[0]
         except:
             return 0
@@ -355,7 +377,7 @@ class Mempool:
         if DEBUG_DO_NOT_SEND_TX:
             all = self.fetchall(SQL_SELECT_TX_TO_SEND)
             tx_count = len(all)
-            tx_list = [tx[1] + ' ' + tx[2] + ' : ' + str(tx[3]) for tx in all]
+            tx_list = [tx[1] + " " + tx[2] + " : " + str(tx[3]) for tx in all]
             # print("I have {} txs for {} but won't send: {}".format(tx_count, peer_ip, "\n".join(tx_list)))
             print("I have {} txs for {} but won't send".format(tx_count, peer_ip))
             return []
@@ -426,21 +448,29 @@ class Mempool:
         if not data:
             return "Mempool from {} was empty".format(peer_ip)
         mempool_result = []
-        if data == '*':
+        if data == "*":
             raise ValueError("Connection lost")
         try:
-            if self.peers_sent[peer_ip] > time.time() and peer_ip != '127.0.0.1':
-                self.app_log.warning("Mempool ignoring merge from frozen {}".format(peer_ip))
-                mempool_result.append("Mempool ignoring merge from frozen {}".format(peer_ip))
+            if self.peers_sent[peer_ip] > time.time() and peer_ip != "127.0.0.1":
+                self.app_log.warning(
+                    "Mempool ignoring merge from frozen {}".format(peer_ip)
+                )
+                mempool_result.append(
+                    "Mempool ignoring merge from frozen {}".format(peer_ip)
+                )
                 return mempool_result
         except:
             # unknown peer
             pass
         if not essentials.is_sequence(data):
-            if peer_ip != '127.0.0.1':
+            if peer_ip != "127.0.0.1":
                 with self.peers_lock:
                     self.peers_sent[peer_ip] = time.time() + 10 * 60
-                self.app_log.warning("Freezing mempool from {} for 10 min - Bad TX format".format(peer_ip))
+                self.app_log.warning(
+                    "Freezing mempool from {} for 10 min - Bad TX format".format(
+                        peer_ip
+                    )
+                )
             mempool_result.append("Bad TX Format")
             return mempool_result
 
@@ -452,7 +482,9 @@ class Mempool:
                     # By default, we don't wait.
                     mempool_result.append("Locked ledger, dropping txs")
                     return mempool_result
-                self.app_log.warning("Waiting for block digestion to finish before merging mempool")
+                self.app_log.warning(
+                    "Waiting for block digestion to finish before merging mempool"
+                )
                 time.sleep(1)
         # if reverting, don't bother with main lock, go on.
 
@@ -470,19 +502,24 @@ class Mempool:
         with self.lock:
             try:
                 block_list = data
-                if not isinstance(block_list[0], list):  # convert to list of lists if only one tx and not handled
+                if not isinstance(
+                    block_list[0], list
+                ):  # convert to list of lists if only one tx and not handled
                     block_list = [block_list]
 
                 for transaction in block_list:
-
                     if size_bypass or self.space_left_for_tx(transaction, mempool_size):
                         # all transactions in the mempool need to be cycled to check for special cases,
                         # therefore no while/break loop here
-                        mempool_timestamp = '%.2f' % (quantize_two(transaction[0]))
-                        mempool_timestamp_float = float(transaction[0])  # limit Decimal where not needed
+                        mempool_timestamp = "%.2f" % (quantize_two(transaction[0]))
+                        mempool_timestamp_float = float(
+                            transaction[0]
+                        )  # limit Decimal where not needed
                         mempool_address = str(transaction[1])[:56]
                         mempool_recipient = str(transaction[2])[:56]
-                        mempool_amount = '%.8f' % (quantize_eight(transaction[3]))  # convert scientific notation
+                        mempool_amount = "%.8f" % (
+                            quantize_eight(transaction[3])
+                        )  # convert scientific notation
                         mempool_amount_float = float(transaction[3])
                         mempool_signature_enc = str(transaction[4])[:684]
                         mempool_public_key_hashed = str(transaction[5])[:1068]
@@ -493,17 +530,28 @@ class Mempool:
 
                         # Begin with the easy tests that do not require cpu or disk access
                         if mempool_amount_float < 0:
-                            mempool_result.append("Mempool: Negative balance spend attempt")
+                            mempool_result.append(
+                                "Mempool: Negative balance spend attempt"
+                            )
                             continue
                         if not essentials.address_validate(mempool_address):
-                            mempool_result.append("Mempool: Invalid address {}".format(mempool_address))
+                            mempool_result.append(
+                                "Mempool: Invalid address {}".format(mempool_address)
+                            )
                             continue
                         if not essentials.address_validate(mempool_recipient):
-                            mempool_result.append("Mempool: Invalid recipient {}".format(mempool_recipient))
+                            mempool_result.append(
+                                "Mempool: Invalid recipient {}".format(
+                                    mempool_recipient
+                                )
+                            )
                             continue
                         if mempool_timestamp_float > time_now:
-                            mempool_result.append("Mempool: Future transaction rejected {}s".
-                                                  format(mempool_timestamp_float - time_now))
+                            mempool_result.append(
+                                "Mempool: Future transaction rejected {}s".format(
+                                    mempool_timestamp_float - time_now
+                                )
+                            )
                             continue
                         if mempool_timestamp_float < time_now - REFUSE_OLDER_THAN:
                             # don't accept old txs, mempool needs to be harsher than ledger
@@ -511,44 +559,74 @@ class Mempool:
                             continue
 
                         # Then more cpu heavy tests
-                        hashed_address = hashlib.sha224(base64.b64decode(mempool_public_key_hashed)).hexdigest()
+                        hashed_address = hashlib.sha224(
+                            base64.b64decode(mempool_public_key_hashed)
+                        ).hexdigest()
                         if mempool_address != hashed_address:
-                            mempool_result.append("Mempool: Attempt to spend from a wrong address {} instead of {}"
-                                                  .format(mempool_address, hashed_address))
+                            mempool_result.append(
+                                "Mempool: Attempt to spend from a wrong address {} instead of {}".format(
+                                    mempool_address, hashed_address
+                                )
+                            )
                             continue
                         # Crypto tests - more cpu hungry
                         try:
                             essentials.validate_pem(mempool_public_key_hashed)
                         except ValueError as e:
-                            mempool_result.append("Mempool: Public key does not validate: {}".format(e))
+                            mempool_result.append(
+                                "Mempool: Public key does not validate: {}".format(e)
+                            )
                         # recheck sig
                         try:
-                            mempool_public_key = RSA.importKey(base64.b64decode(mempool_public_key_hashed))
-                            mempool_signature_dec = base64.b64decode(mempool_signature_enc)
+                            mempool_public_key = RSA.importKey(
+                                base64.b64decode(mempool_public_key_hashed)
+                            )
+                            mempool_signature_dec = base64.b64decode(
+                                mempool_signature_enc
+                            )
                             verifier = PKCS1_v1_5.new(mempool_public_key)
-                            tx_signed = (mempool_timestamp, mempool_address, mempool_recipient, mempool_amount,
-                                         mempool_operation, mempool_openfield)
+                            tx_signed = (
+                                mempool_timestamp,
+                                mempool_address,
+                                mempool_recipient,
+                                mempool_amount,
+                                mempool_operation,
+                                mempool_openfield,
+                            )
                             my_hash = SHA.new(str(tx_signed).encode("utf-8"))
                             if not verifier.verify(my_hash, mempool_signature_dec):
-                                mempool_result.append("Mempool: Wrong signature ({}) for data {} in mempool insert attempt".
-                                                      format(mempool_signature_enc, tx_signed))
+                                mempool_result.append(
+                                    "Mempool: Wrong signature ({}) for data {} in mempool insert attempt".format(
+                                        mempool_signature_enc, tx_signed
+                                    )
+                                )
                                 continue
                         except Exception as e:
-                            mempool_result.append("Mempool: Unexpected error checking sig: {}".format(e))
+                            mempool_result.append(
+                                "Mempool: Unexpected error checking sig: {}".format(e)
+                            )
                             continue
 
                         # Only now, process the tests requiring db access
                         mempool_in = self.sig_check(mempool_signature_enc)
 
                         # Temp: get last block for HF reason
-                        essentials.execute_param_c(c, "SELECT block_height FROM transactions WHERE 1 ORDER by block_height DESC limit ?",
-                                                   (1,), self.app_log)
+                        essentials.execute_param_c(
+                            c,
+                            "SELECT block_height FROM transactions WHERE 1 ORDER by block_height DESC limit ?",
+                            (1,),
+                            self.app_log,
+                        )
                         last_block = c.fetchone()[0]
                         # reject transactions which are already in the ledger
                         # TODO: not clean, will need to have ledger as a module too.
                         # TODO: need better txid index, this is very sloooooooow
-                        essentials.execute_param_c(c, "SELECT timestamp FROM transactions WHERE signature = ?",
-                                                   (mempool_signature_enc,), self.app_log)
+                        essentials.execute_param_c(
+                            c,
+                            "SELECT timestamp FROM transactions WHERE signature = ?",
+                            (mempool_signature_enc,),
+                            self.app_log,
+                        )
                         ledger_in = bool(c.fetchone())
                         # remove from mempool if it's in both ledger and mempool already
                         if mempool_in and ledger_in:
@@ -556,73 +634,121 @@ class Mempool:
                                 # Do not lock, we already have the lock for the whole merge.
                                 self.execute(SQL_DELETE_TX, (mempool_signature_enc,))
                                 self.commit()
-                                mempool_result.append("Mempool: Transaction deleted from our mempool")
+                                mempool_result.append(
+                                    "Mempool: Transaction deleted from our mempool"
+                                )
                             except:  # experimental try and except
-                                mempool_result.append("Mempool: Transaction was not present in the pool anymore")
+                                mempool_result.append(
+                                    "Mempool: Transaction was not present in the pool anymore"
+                                )
                             continue
                         if ledger_in:
-                            mempool_result.append("That transaction is already in our ledger")
+                            mempool_result.append(
+                                "That transaction is already in our ledger"
+                            )
                             # Can be a syncing node. Do not request mempool from this peer until FREEZE_MIN min
                             # ledger_in is the ts of the tx in ledger. if it's recent, maybe the peer is just one block late.
                             # give him 3 minute margin.
-                            if (peer_ip != '127.0.0.1') and (ledger_in < time_now - 60 * 3):
+                            if (peer_ip != "127.0.0.1") and (
+                                ledger_in < time_now - 60 * 3
+                            ):
                                 with self.peers_lock:
-                                    self.peers_sent[peer_ip] = time.time() + FREEZE_MIN * 60
-                                self.app_log.warning("Freezing mempool from {} for {} min.".format(peer_ip, FREEZE_MIN))
+                                    self.peers_sent[peer_ip] = (
+                                        time.time() + FREEZE_MIN * 60
+                                    )
+                                self.app_log.warning(
+                                    "Freezing mempool from {} for {} min.".format(
+                                        peer_ip, FREEZE_MIN
+                                    )
+                                )
                             # Here, we point blank stop processing the batch from this host since it's outdated.
                             # Update: Do not, since it blocks further valid tx - case has been found in real use.
                             # return mempool_result
                             continue
                         # Already there, just ignore then
                         if mempool_in:
-                            mempool_result.append("That transaction is already in our mempool")
+                            mempool_result.append(
+                                "That transaction is already in our mempool"
+                            )
                             continue
 
                         # Here we covered the basics, the current tx is conform and signed. Now let's check balance.
 
                         # verify balance
-                        mempool_result.append("Mempool: Received address: {}".format(mempool_address))
+                        mempool_result.append(
+                            "Mempool: Received address: {}".format(mempool_address)
+                        )
                         # include mempool fees
-                        result = self.fetchall("SELECT amount, openfield, operation FROM transactions WHERE address = ?",
-                                               (mempool_address,))
+                        result = self.fetchall(
+                            "SELECT amount, openfield, operation FROM transactions WHERE address = ?",
+                            (mempool_address,),
+                        )
                         debit_mempool = 0
                         if result:
                             for x in result:
                                 debit_tx = quantize_eight(x[0])
                                 fee = fee_calculate(x[1], x[2], last_block)
-                                debit_mempool = quantize_eight(debit_mempool + debit_tx + fee)
+                                debit_mempool = quantize_eight(
+                                    debit_mempool + debit_tx + fee
+                                )
 
                         credit = 0
-                        for entry in essentials.execute_param_c(c,
-                                                                "SELECT amount FROM transactions WHERE recipient = ?",
-                                                                (mempool_address,), self.app_log):
+                        for entry in essentials.execute_param_c(
+                            c,
+                            "SELECT amount FROM transactions WHERE recipient = ?",
+                            (mempool_address,),
+                            self.app_log,
+                        ):
                             credit = quantize_eight(credit) + quantize_eight(entry[0])
 
                         debit_ledger = 0
-                        for entry in essentials.execute_param_c(c,
-                                                                "SELECT amount FROM transactions WHERE address = ?",
-                                                                (mempool_address,), self.app_log):
-                            debit_ledger = quantize_eight(debit_ledger) + quantize_eight(entry[0])
+                        for entry in essentials.execute_param_c(
+                            c,
+                            "SELECT amount FROM transactions WHERE address = ?",
+                            (mempool_address,),
+                            self.app_log,
+                        ):
+                            debit_ledger = quantize_eight(
+                                debit_ledger
+                            ) + quantize_eight(entry[0])
                         debit = debit_ledger + debit_mempool
 
                         fees = 0
-                        for entry in essentials.execute_param_c(c,
-                                                                "SELECT fee FROM transactions WHERE address = ?",
-                                                                (mempool_address,), self.app_log):
+                        for entry in essentials.execute_param_c(
+                            c,
+                            "SELECT fee FROM transactions WHERE address = ?",
+                            (mempool_address,),
+                            self.app_log,
+                        ):
                             fees = quantize_eight(fees) + quantize_eight(entry[0])
 
                         rewards = 0
-                        for entry in essentials.execute_param_c(c,
-                                                                "SELECT sum(reward) FROM transactions WHERE recipient = ?",
-                                                                (mempool_address,), self.app_log):
+                        for entry in essentials.execute_param_c(
+                            c,
+                            "SELECT sum(reward) FROM transactions WHERE recipient = ?",
+                            (mempool_address,),
+                            self.app_log,
+                        ):
                             rewards = quantize_eight(rewards) + quantize_eight(entry[0])
 
-                        balance = quantize_eight(credit - debit - fees + rewards - quantize_eight(mempool_amount))
-                        balance_pre = quantize_eight(credit - debit_ledger - fees + rewards)
+                        balance = quantize_eight(
+                            credit
+                            - debit
+                            - fees
+                            + rewards
+                            - quantize_eight(mempool_amount)
+                        )
+                        balance_pre = quantize_eight(
+                            credit - debit_ledger - fees + rewards
+                        )
 
-                        fee = fee_calculate(mempool_openfield, mempool_operation, last_block)
+                        fee = fee_calculate(
+                            mempool_openfield, mempool_operation, last_block
+                        )
 
-                        if quantize_eight(mempool_amount) > quantize_eight(balance_pre): #mp amount is already included in "balance" var! also, that tx might already be in the mempool
+                        if (
+                            quantize_eight(mempool_amount) > quantize_eight(balance_pre)
+                        ):  # mp amount is already included in "balance" var! also, that tx might already be in the mempool
                             mempool_result.append("Mempool: Sending more than owned")
                             continue
                         if quantize_eight(balance) - quantize_eight(fee) < 0:
@@ -630,17 +756,33 @@ class Mempool:
                             continue
 
                         # Pfew! we can finally insert into mempool - all is str, type converted and enforced above
-                        self.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
-                                     (mempool_timestamp, mempool_address, mempool_recipient, mempool_amount,
-                                      mempool_signature_enc, mempool_public_key_hashed, mempool_operation,
-                                      mempool_openfield, int(time_now)))
-                        mempool_result.append("Mempool updated with a received transaction from {}".format(peer_ip))
+                        self.execute(
+                            "INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
+                            (
+                                mempool_timestamp,
+                                mempool_address,
+                                mempool_recipient,
+                                mempool_amount,
+                                mempool_signature_enc,
+                                mempool_public_key_hashed,
+                                mempool_operation,
+                                mempool_openfield,
+                                int(time_now),
+                            ),
+                        )
+                        mempool_result.append(
+                            "Mempool updated with a received transaction from {}".format(
+                                peer_ip
+                            )
+                        )
                         mempool_result.append("Success")
                         self.commit()  # Save (commit) the changes to mempool db
 
                         mempool_size += sys.getsizeof(str(transaction)) / 1000000.0
                     else:
-                        mempool_result.append("Local mempool is already full for this tx type, skipping merging")
+                        mempool_result.append(
+                            "Local mempool is already full for this tx type, skipping merging"
+                        )
                         # self.app_log.warning("Local mempool is already full for this tx type, skipping merging")
                 # TEMP
                 # print("Mempool insert", mempool_result)

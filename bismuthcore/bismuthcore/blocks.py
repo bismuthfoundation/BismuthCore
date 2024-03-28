@@ -5,9 +5,8 @@ Bismuth core Blocks Class
 from bismuthcore.transaction import Transaction
 from bismuthcore.block import Block
 from typing import List
-import sys
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 
 class Blocks:

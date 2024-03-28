@@ -67,7 +67,7 @@ class BismuthUtil:
         Takes a bis url, checks its checksum and gives the components
         """
         url_split = url.split("/")
-        reconstruct = "bis://{}/{}/{}/{}/{}/".format(
+        reconstruct = "bis://{}/{}/{}/{}/{}/{}".format(
             url_split[2],
             url_split[3],
             url_split[4],

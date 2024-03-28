@@ -7,7 +7,7 @@ import argparse
 import logging
 import tornado.log
 from os import path
-from cloghandler import ConcurrentRotatingFileHandler  # pip install ConcurrentLogHandler
+from concurrent_log_handler  import ConcurrentRotatingFileHandler  # pip install concurrent-log-handler
 
 sys.path.append('../')  # This is a hack in dev context to use the local bismuthcore code.
 from bismuthcore.bismuthconfig import BismuthConfig

@@ -50,11 +50,11 @@ class BismuthWallet:
                 content = json.load(f)
             info["address"] = content["Address"]  # Warning case change!!!
             try:
-                key = RSA.importKey(content["Private Key"])
+                _ = RSA.importKey(content["Private Key"])
                 info["encrypted"] = False
-            except:  # encrypted
+            except Exception:  # encrypted
                 info["encrypted"] = True
-        except:
+        except Exception:
             pass
         return info
 
@@ -87,7 +87,7 @@ class BismuthWallet:
         try:
             self.key = RSA.importKey(content["Private Key"])
             self.public_key = content["Public Key"]
-        except:  # encrypted
+        except Exception:  # encrypted
             self._infos["encrypted"] = True
 
     def new(self, wallet_file="wallet.der"):

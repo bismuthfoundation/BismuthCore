@@ -3,7 +3,7 @@ Messages classes ancestors.
 """
 
 from abc import ABC, abstractmethod
-from bismuthcore.helpers import base_app_log
+# from bismuthcore.helpers import base_app_log
 
 
 __version__ = "0.0.1"

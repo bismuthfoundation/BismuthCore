@@ -125,9 +125,9 @@ class Transaction:
     @staticmethod
     def f8_to_int(a_str: str) -> int:
         """Helper function to convert a legacy string 0.8f to compact int format"""
-        if type(a_str) == float:
+        if isinstance(a_str, float):
             print("** f8_to_int got a float")
-            exc_type, exc_obj, exc_tb = sys.exc_info()
+            exc_type, _, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
             sleep(1)
@@ -158,11 +158,11 @@ class Transaction:
         Call as tx = Transaction.from_legacy_params(0, '', 0 ...)
         """
         # print("TEMP TS TYPE", type(timestamp))  # str with regnet v2
-        if type(amount) == float:
+        if isinstance(amount, float):
             amount = f"{amount:0.8f}"
-        if type(fee) == float:
+        if isinstance(fee, float):
             fee = f"{fee:0.8f}"
-        if type(reward) == float:
+        if isinstance(reward, float):
             reward = f"{reward:0.8f}"
         int_amount = Transaction.f8_to_int(amount)
         """
@@ -295,11 +295,11 @@ class Transaction:
             "-----BEGIN PUBLIC KEY-----\n", ""
         )
         # print("public_key2", public_key)
-        if type(amount) == float:
+        if isinstance(amount, float):
             amount = f"{amount:0.8f}"
-        if type(fee) == float:
+        if isinstance(fee, float):
             fee = f"{fee:0.8f}"
-        if type(reward) == float:
+        if isinstance(reward, float):
             reward = f"{reward:0.8f}"
         int_amount = Transaction.f8_to_int(amount)
         int_fee = Transaction.f8_to_int(fee)

@@ -80,7 +80,7 @@ class TornadoBackend(ComBackend):
     def __init__(self, node, app_log=None, config=None, verbose: bool=False):
         super().__init__(node, app_log, config, verbose)
 
-        self.async = True  # Tells whether this backend is async or not (else it would be threaded).
+        self.is_async = True  # Tells whether this backend is async or not (else it would be threaded).
         self.threads = 0  # Improper, these are co-routines.
         self.app_log.info(f"Tornado: Init port {self.port} on address '{self.address}'.")
 

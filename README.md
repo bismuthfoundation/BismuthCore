@@ -19,6 +19,16 @@ It's targeted toward clean and stable code, with tests and doc, rather than blee
 
 `pip3 install BismuthCore`
 
+## Development
+
+Using `poetry`
+```sh
+poetry install  # Install requirements and development dependencies
+poetry shell  # Activate virtual environment
+pip install -e .  # Install BismuthCore for development
+pytest  # Run tests
+```
+
 ## Current state
 
 Alpha - Do not use.

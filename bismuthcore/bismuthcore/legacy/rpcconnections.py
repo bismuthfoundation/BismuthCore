@@ -66,7 +66,7 @@ class Connection(object):
             self.sdef.settimeout(LTIMEOUT)
             # Make sure the packet is sent in one call
             sdata = str(json.dumps(data))
-            res = self.sdef.sendall(
+            _ = self.sdef.sendall(
                 str(len(sdata)).encode("utf-8").zfill(slen) + sdata.encode("utf-8")
             )
             if self.raw:
@@ -117,7 +117,7 @@ class Connection(object):
                 self.close()
                 raise RuntimeError("Socket EOF")
             data = int(data)  # receive length
-        except socket.timeout as e:
+        except socket.timeout:
             self.close()
             return ""
         try:
@@ -180,7 +180,7 @@ class Connection(object):
         if self.sdef:
             try:
                 self.sdef.close()
-            except Exception as e:
+            except Exception:
                 pass
             finally:
                 self.sdef = None

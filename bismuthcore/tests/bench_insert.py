@@ -11,12 +11,13 @@ from bismuthcore.decorators import timeit
 from bismuthcore.compat import quantize_eight
 from bismuthcore.helpers import native_tx_to_bin_sqlite, TxConverter
 
-SQL_CREATE = ('''
+SQL_CREATE = (
+    """
               CREATE TABLE "misc" (
                   `block_height`	INTEGER,
                   `difficulty`	TEXT
-              )''',
-              '''CREATE TABLE "transactions" (
+              )""",
+    """CREATE TABLE "transactions" (
                   `block_height`	INTEGER,
                   `timestamp`	NUMERIC,
                   `address`	BLOB(28),
@@ -29,27 +30,28 @@ SQL_CREATE = ('''
                   `ireward`	INTEGER,
                   `operation`	TEXT,
                   `openfield`	TEXT
-              )''',
-              'CREATE INDEX `Timestamp Index` ON `transactions` (`timestamp`)',
-              'CREATE INDEX `Signature Index` ON `transactions` (`signature`)',
-              'CREATE INDEX `Reward Index` ON `transactions` (`ireward`)',
-              'CREATE INDEX `Recipient Index` ON `transactions` (`recipient`)',
-              'CREATE INDEX `Openfield Index` ON `transactions` (`openfield`)',
-              'CREATE INDEX `Fee Index` ON `transactions` (`ifee`)',
-              'CREATE INDEX `Block Height Index` ON `transactions` (`block_height`)',
-              'CREATE INDEX `Block Hash Index` ON `transactions` (`block_hash`)',
-              'CREATE INDEX `Amount Index` ON `transactions` (`iamount`)',
-              'CREATE INDEX `Address Index` ON `transactions` (`address`)',
-              'CREATE INDEX `Operation Index` ON `transactions` (`operation`)',
-              )
+              )""",
+    "CREATE INDEX `Timestamp Index` ON `transactions` (`timestamp`)",
+    "CREATE INDEX `Signature Index` ON `transactions` (`signature`)",
+    "CREATE INDEX `Reward Index` ON `transactions` (`ireward`)",
+    "CREATE INDEX `Recipient Index` ON `transactions` (`recipient`)",
+    "CREATE INDEX `Openfield Index` ON `transactions` (`openfield`)",
+    "CREATE INDEX `Fee Index` ON `transactions` (`ifee`)",
+    "CREATE INDEX `Block Height Index` ON `transactions` (`block_height`)",
+    "CREATE INDEX `Block Hash Index` ON `transactions` (`block_hash`)",
+    "CREATE INDEX `Amount Index` ON `transactions` (`iamount`)",
+    "CREATE INDEX `Address Index` ON `transactions` (`address`)",
+    "CREATE INDEX `Operation Index` ON `transactions` (`operation`)",
+)
 
 
-SQL_CREATE_LEGACY = ('''
+SQL_CREATE_LEGACY = (
+    """
                      CREATE TABLE "misc" (
                          `block_height`	INTEGER,
                          `difficulty`	TEXT
-                     )''',
-                     '''CREATE TABLE "transactions" (
+                     )""",
+    """CREATE TABLE "transactions" (
                          `block_height`	INTEGER,
                          `timestamp`	NUMERIC,
                          `address`	TEXT,
@@ -62,19 +64,19 @@ SQL_CREATE_LEGACY = ('''
                          `reward`	NUMERIC,
                          `operation`	TEXT,
                          `openfield`	TEXT
-                     )''',
-                     'CREATE INDEX `Timestamp Index` ON `transactions` (`timestamp`)',
-                     'CREATE INDEX `Signature Index` ON `transactions` (`signature`)',
-                     'CREATE INDEX `Reward Index` ON `transactions` (`reward`)',
-                     'CREATE INDEX `Recipient Index` ON `transactions` (`recipient`)',
-                     'CREATE INDEX `Openfield Index` ON `transactions` (`openfield`)',
-                     'CREATE INDEX `Fee Index` ON `transactions` (`fee`)',
-                     'CREATE INDEX `Block Height Index` ON `transactions` (`block_height`)',
-                     'CREATE INDEX `Block Hash Index` ON `transactions` (`block_hash`)',
-                     'CREATE INDEX `Amount Index` ON `transactions` (`amount`)',
-                     'CREATE INDEX `Address Index` ON `transactions` (`address`)',
-                     'CREATE INDEX `Operation Index` ON `transactions` (`operation`)',
-                     )
+                     )""",
+    "CREATE INDEX `Timestamp Index` ON `transactions` (`timestamp`)",
+    "CREATE INDEX `Signature Index` ON `transactions` (`signature`)",
+    "CREATE INDEX `Reward Index` ON `transactions` (`reward`)",
+    "CREATE INDEX `Recipient Index` ON `transactions` (`recipient`)",
+    "CREATE INDEX `Openfield Index` ON `transactions` (`openfield`)",
+    "CREATE INDEX `Fee Index` ON `transactions` (`fee`)",
+    "CREATE INDEX `Block Height Index` ON `transactions` (`block_height`)",
+    "CREATE INDEX `Block Hash Index` ON `transactions` (`block_hash`)",
+    "CREATE INDEX `Amount Index` ON `transactions` (`amount`)",
+    "CREATE INDEX `Address Index` ON `transactions` (`address`)",
+    "CREATE INDEX `Operation Index` ON `transactions` (`operation`)",
+)
 
 
 def create(db, sql: tuple):
@@ -86,59 +88,72 @@ def create(db, sql: tuple):
 @timeit
 def insert_new(tx_list):
     # Using in-ram DB to avoid disk I/O artefacts
-    test_new = sqlite3.connect('file:ledger_new?mode=memory', uri=True, timeout=1)
+    test_new = sqlite3.connect("file:ledger_new?mode=memory", uri=True, timeout=1)
     create(test_new, SQL_CREATE)
     for tx in tx_list:
         # Creates instance from tuple data, copy to inner properties
         tx = Transaction.from_legacy(tx)
         # Then converts to bin and into bin tuple
-        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                         tx.to_bin_tuple(sqlite_encode=True))
+        test_new.execute(
+            "INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            tx.to_bin_tuple(sqlite_encode=True),
+        )
     return test_new
 
 
 @timeit
 def insert_new_function(tx_list):
-    """ Uses a call to a function helper"""
-    test_new = sqlite3.connect('file:ledger_new_function?mode=memory', uri=True, timeout=1)
+    """Uses a call to a function helper"""
+    test_new = sqlite3.connect(
+        "file:ledger_new_function?mode=memory", uri=True, timeout=1
+    )
     create(test_new, SQL_CREATE)
     for tx in tx_list:
         # converts into bin tuple - just conversion, no object created, no stored property.
-        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", native_tx_to_bin_sqlite(tx))
+        test_new.execute(
+            "INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            native_tx_to_bin_sqlite(tx),
+        )
     return test_new
 
 
 @timeit
 def insert_new_class(tx_list):
-    """ Uses a call to a function helper"""
-    test_new = sqlite3.connect('file:ledger_new_class?mode=memory', uri=True, timeout=1)
+    """Uses a call to a function helper"""
+    test_new = sqlite3.connect("file:ledger_new_class?mode=memory", uri=True, timeout=1)
     create(test_new, SQL_CREATE)
     for tx in tx_list:
         # converts into bin tuple - just conversion, no object created, no stored property.
-        test_new.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                         TxConverter.native_tx_to_bin_sqlite(tx))
+        test_new.execute(
+            "INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            TxConverter.native_tx_to_bin_sqlite(tx),
+        )
     return test_new
 
 
 @timeit
 def insert_legacy(tx_list):
-    test_legacy = sqlite3.connect('file:ledger_legacy?mode=memory', uri=True, timeout=1)
+    test_legacy = sqlite3.connect("file:ledger_legacy?mode=memory", uri=True, timeout=1)
     create(test_legacy, SQL_CREATE_LEGACY)
     for tx in tx_list:
         # Directly insert tuple without any conversion to db
-        test_legacy.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx)
+        test_legacy.execute(
+            "INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx
+        )
     return test_legacy
 
 
 @timeit
 def insert_legacy_object(tx_list):
-    test_legacy = sqlite3.connect('file:ledger_legacy?mode=memory', uri=True, timeout=1)
+    test_legacy = sqlite3.connect("file:ledger_legacy?mode=memory", uri=True, timeout=1)
     create(test_legacy, SQL_CREATE_LEGACY)
     for tx in tx_list:
         # Creates instance from tuple data, copy to inner properties (converts to binary as well)
         tx = Transaction.from_legacy(tx)
         # Then export again
-        test_legacy.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_tuple())
+        test_legacy.execute(
+            "INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", tx.to_tuple()
+        )
     return test_legacy
 
 
@@ -156,7 +171,7 @@ def balance_new(db, address: str):
     )
     r2 = q2.fetchone()
     debit = r2[0] if r2[0] else 0
-    return Transaction.int_to_f8(credit-debit)
+    return Transaction.int_to_f8(credit - debit)
 
 
 @timeit
@@ -176,13 +191,17 @@ def balance_new2(db, address: str):
 def balance_legacy(db, address: str):
     # from essentials.py
     credit_ledger = Decimal(0)
-    q1 = db.execute("SELECT amount, reward FROM transactions WHERE recipient = ?", (address,))
+    q1 = db.execute(
+        "SELECT amount, reward FROM transactions WHERE recipient = ?", (address,)
+    )
     entries = q1.fetchall()
     for entry in entries:
         credit_ledger += quantize_eight(entry[0]) + quantize_eight(entry[1])
 
     debit_ledger = Decimal(0)
-    q2 = db.execute("SELECT amount, fee FROM transactions WHERE address = ?", (address,))
+    q2 = db.execute(
+        "SELECT amount, fee FROM transactions WHERE address = ?", (address,)
+    )
     entries = q2.fetchall()
     for entry in entries:
         debit_ledger += quantize_eight(entry[0]) + quantize_eight(entry[1])
@@ -200,16 +219,22 @@ if __name__ == "__main__":
     new_db = insert_new(txs)
     insert_new_function(txs)
     insert_new_class(txs)
-    bal_new = balance_new(new_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38")
+    bal_new = balance_new(
+        new_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38"
+    )
     # balances can be negative here since we don't have the chain from start.
     print(bal_new)
-    bal_new2 = balance_new2(new_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38")
+    bal_new2 = balance_new2(
+        new_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38"
+    )
     # balances can be negative here since we don't have the chain from start.
     print(bal_new2)
     # da8a39cc9d880cd55c324afc2f9596c64fac05b8d41b3c9b6c481b4e
     insert_legacy_object(txs)
     legacy_db = insert_legacy(txs)
-    bal_legacy = balance_legacy(legacy_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38")
+    bal_legacy = balance_legacy(
+        legacy_db, "e13e79dc7e4b8265d7cdafe31819939fcce98abc2c7662f7fb53fa38"
+    )
     print(bal_legacy)
 
 

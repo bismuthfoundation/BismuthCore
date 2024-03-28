@@ -9,6 +9,7 @@ from bismuthcore import bismuthcore  # noqa: F401
 
 # TODO
 
+
 @pytest.fixture
 def response():
     """Sample pytest fixture.

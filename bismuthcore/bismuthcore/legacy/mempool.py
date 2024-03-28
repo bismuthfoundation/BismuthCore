@@ -18,7 +18,7 @@ from Cryptodome.Hash import SHA
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import PKCS1_v1_5
 
-from .essentials import is_sequence
+from .essentials import is_sequence, address_validate
 from bismuthcore.compat import quantize_two, quantize_eight
 from bismuthcore.helpers import fee_calculate
 # import json
@@ -536,12 +536,12 @@ class Mempool:
                                 "Mempool: Negative balance spend attempt"
                             )
                             continue
-                        if not essentials.address_validate(mempool_address):
+                        if not address_validate(mempool_address):
                             mempool_result.append(
                                 "Mempool: Invalid address {}".format(mempool_address)
                             )
                             continue
-                        if not essentials.address_validate(mempool_recipient):
+                        if not address_validate(mempool_recipient):
                             mempool_result.append(
                                 "Mempool: Invalid recipient {}".format(
                                     mempool_recipient

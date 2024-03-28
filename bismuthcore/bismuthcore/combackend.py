@@ -13,7 +13,7 @@ class ComClient(ABC):
 
     def __init__(self, config, host: str = '', port: int = 0, app_log=None):
         self.app_log = base_app_log(app_log)
-        self.async = True  # Tells whether this backend is async or not (else it would be threaded).
+        self.is_async = True  # Tells whether this backend is async or not (else it would be threaded).
         self.config = config
         self.port = port
         self.host = host

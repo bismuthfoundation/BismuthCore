@@ -640,7 +640,11 @@ class Mempool:
                                     "Mempool: Transaction deleted from our mempool"
                                 )
                             except Exception as e:  # experimental try and except
-                                self.app_log.debug("Mempool: Error deleting tx from mempool: {}".format(e))
+                                self.app_log.debug(
+                                    "Mempool: Error deleting tx from mempool: {}".format(
+                                        e
+                                    )
+                                )
                                 mempool_result.append(
                                     "Mempool: Transaction was not present in the pool anymore"
                                 )

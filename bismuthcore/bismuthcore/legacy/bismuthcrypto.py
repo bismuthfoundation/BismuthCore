@@ -208,7 +208,7 @@ def keys_load(privkey="privkey.der", pubkey="pubkey.der"):
             except Exception:
                 raise
 
-        # public_key_readable = str(key.publickey().exportKey())
+            # public_key_readable = str(key.publickey().exportKey())
             with open(pubkey.encode("utf-8")) as keyfile:
                 public_key_readable = keyfile.read()
 

@@ -534,7 +534,7 @@ class Peers:
         try:
             tries, timeout = self.tried[host_port]  # noqa: F841
         except Exception as e:
-             # unknown host for now, never tried.
+            # unknown host for now, never tried.
             tries, timeout = 0, 0  # noqa: F841
             self.app_log.debug(f"Error: {e}")
         if timeout > time.time():

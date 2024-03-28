@@ -2,11 +2,6 @@
 # -*- coding: utf-8 -*-
 
 """Tests for `bismuthcore` package."""
-
-import pytest
-import sys
-
-sys.path.append('../')
 # from bismuthcore.clientcommands import ClientCommands
 from bismuthcore.bismuthconfig import BismuthConfig
 

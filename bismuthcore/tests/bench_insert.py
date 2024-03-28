@@ -4,10 +4,8 @@ Tx insert benchmark
 
 import json
 import sqlite3
-import sys
 from decimal import Decimal
 
-sys.path.append('../')
 from bismuthcore.transaction import Transaction
 from bismuthcore.decorators import timeit
 from bismuthcore.compat import quantize_eight

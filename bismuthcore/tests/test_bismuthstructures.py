@@ -3,12 +3,9 @@
 
 """Tests for `bismuthcore` package."""
 
-import pytest
 import random
-import sys
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 
-sys.path.append('../')
 from bismuthcore.transaction import Transaction
 
 getcontext().rounding = ROUND_HALF_EVEN
@@ -27,13 +24,13 @@ TX = Transaction.from_legacy_params(block_height=1, timestamp=0.01,
 
 def test_create_transaction():
     """Can create a Transaction object"""
-    tx = Transaction()
+    Transaction()
 
 
 def test_convert_amount():
     """double convert gives same amount"""
     random.seed('Reproducible test')
-    for i in range(10):
+    for _ in range(10):
         amount = random.random()*100
         f8_amount =  str('{:.8f}'.format(Decimal(amount)))
         int_amount = Transaction.f8_to_int(f8_amount)

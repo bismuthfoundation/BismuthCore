@@ -55,8 +55,8 @@ class TornadoComClient(ComClient):
         """Be sure to call this one, or the thread count won't be correct."""
         try:
             self.stream_handler.close()
-        except:
-            pass
+        except Exception as e:
+            self.app_log.warning("Error closing client {}".format(e))
 
     @property
     def connected(self) -> bool:
@@ -180,8 +180,8 @@ class TornadoComServer(TCPServer):
             # TODO: use a core structure with from/to to convert ?
             # Convert here or in bismuthcore? or just use different classes like for the backend?
             await self.backend.node.process_legacy_command(command)
-        except:
-            pass
+        except Exception as e:
+            self.app_log.error("TornadoComServer: Error: {}".format(e))
         finally:
             self.backend.threads -= 1
 

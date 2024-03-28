@@ -4,12 +4,16 @@
 """The setup script."""
 
 from setuptools import setup, find_packages
+from pathlib import Path
 
-with open('README.rst') as readme_file:
-    readme = readme_file.read()
+THIS_DIR = Path(__file__).parent
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
+README = THIS_DIR / "README.rst"
+HISTORY = THIS_DIR / "HISTORY.rst"
+
+README_TEXT = README.read_text()
+
+HISTORY_TEXT = HISTORY.read_text()
 
 requirements = ['polysign>=0.1.0', 'Tornado', 'concurrent-log-handler', 'requests', 'aioprocessing']
 
@@ -28,11 +32,12 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.10',
     ],
     description="Core Bismuth libraries for stable nodes versions.",
     install_requires=requirements,
     license="MIT license",
-    long_description=readme + '\n\n' + history,
+    long_description=README_TEXT + '\n\n' + HISTORY_TEXT,
     include_package_data=True,
     keywords='bismuthcore',
     name='bismuthcore',

@@ -18,12 +18,12 @@ from Cryptodome.Hash import SHA
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import PKCS1_v1_5
 
-from .essentials import is_sequence, address_validate
+from .essentials import is_sequence, address_validate, validate_pem, execute_param_c
 from bismuthcore.compat import quantize_two, quantize_eight
 from bismuthcore.helpers import fee_calculate
 # import json
 
-__version__ = "0.0.5f"
+__version__ = "0.0.6a"
 
 # NOTE: Old version archived for comparison, not to be used.
 """
@@ -573,7 +573,7 @@ class Mempool:
                             continue
                         # Crypto tests - more cpu hungry
                         try:
-                            essentials.validate_pem(mempool_public_key_hashed)
+                            validate_pem(mempool_public_key_hashed)
                         except ValueError as e:
                             mempool_result.append(
                                 "Mempool: Public key does not validate: {}".format(e)
@@ -613,7 +613,7 @@ class Mempool:
                         mempool_in = self.sig_check(mempool_signature_enc)
 
                         # Temp: get last block for HF reason
-                        essentials.execute_param_c(
+                        execute_param_c(
                             c,
                             "SELECT block_height FROM transactions WHERE 1 ORDER by block_height DESC limit ?",
                             (1,),
@@ -623,7 +623,7 @@ class Mempool:
                         # reject transactions which are already in the ledger
                         # TODO: not clean, will need to have ledger as a module too.
                         # TODO: need better txid index, this is very sloooooooow
-                        essentials.execute_param_c(
+                        execute_param_c(
                             c,
                             "SELECT timestamp FROM transactions WHERE signature = ?",
                             (mempool_signature_enc,),
@@ -696,7 +696,7 @@ class Mempool:
                                 )
 
                         credit = 0
-                        for entry in essentials.execute_param_c(
+                        for entry in execute_param_c(
                             c,
                             "SELECT amount FROM transactions WHERE recipient = ?",
                             (mempool_address,),
@@ -705,7 +705,7 @@ class Mempool:
                             credit = quantize_eight(credit) + quantize_eight(entry[0])
 
                         debit_ledger = 0
-                        for entry in essentials.execute_param_c(
+                        for entry in execute_param_c(
                             c,
                             "SELECT amount FROM transactions WHERE address = ?",
                             (mempool_address,),
@@ -717,7 +717,7 @@ class Mempool:
                         debit = debit_ledger + debit_mempool
 
                         fees = 0
-                        for entry in essentials.execute_param_c(
+                        for entry in execute_param_c(
                             c,
                             "SELECT fee FROM transactions WHERE address = ?",
                             (mempool_address,),
@@ -726,7 +726,7 @@ class Mempool:
                             fees = quantize_eight(fees) + quantize_eight(entry[0])
 
                         rewards = 0
-                        for entry in essentials.execute_param_c(
+                        for entry in execute_param_c(
                             c,
                             "SELECT sum(reward) FROM transactions WHERE recipient = ?",
                             (mempool_address,),

@@ -5,6 +5,7 @@ Mempool module for Bismuth nodes
 # TODO: REWORK NEEDED
 
 import base64
+from decimal import Decimal
 import hashlib
 import os
 import sqlite3
@@ -17,7 +18,7 @@ from Cryptodome.Hash import SHA
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import PKCS1_v1_5
 
-import essentials
+from .essentials import is_sequence
 from bismuthcore.compat import quantize_two, quantize_eight
 from bismuthcore.helpers import fee_calculate
 # import json
@@ -321,7 +322,8 @@ class Mempool:
                 )
             )
             return status[0]
-        except:
+        except Exception as e:
+            self.app_log.debug("Mempool status error: {}".format(e))
             return 0
 
     def size(self):
@@ -333,7 +335,8 @@ class Mempool:
             mempool_txs = self.fetchall(SQL_SELECT_ALL_TXS)
             mempool_size = sys.getsizeof(str(mempool_txs)) / 1000000.0
             return mempool_size
-        except:
+        except Exception as e:
+            self.app_log.debug("Mempool size error: {}".format(e))
             return 0
 
     def sent(self, peer_ip):
@@ -375,9 +378,9 @@ class Mempool:
         :return:
         """
         if DEBUG_DO_NOT_SEND_TX:
-            all = self.fetchall(SQL_SELECT_TX_TO_SEND)
-            tx_count = len(all)
-            tx_list = [tx[1] + " " + tx[2] + " : " + str(tx[3]) for tx in all]
+            all_txs = self.fetchall(SQL_SELECT_TX_TO_SEND)
+            tx_count = len(all_txs)
+            _ = [tx[1] + " " + tx[2] + " : " + str(tx[3]) for tx in all_txs]  # tx_list
             # print("I have {} txs for {} but won't send: {}".format(tx_count, peer_ip, "\n".join(tx_list)))
             print("I have {} txs for {} but won't send".format(tx_count, peer_ip))
             return []
@@ -459,10 +462,9 @@ class Mempool:
                     "Mempool ignoring merge from frozen {}".format(peer_ip)
                 )
                 return mempool_result
-        except:
-            # unknown peer
-            pass
-        if not essentials.is_sequence(data):
+        except Exception:
+            self.app_log.debug("Mempool: Peer {} not in sent list".format(peer_ip))
+        if not is_sequence(data):
             if peer_ip != "127.0.0.1":
                 with self.peers_lock:
                     self.peers_sent[peer_ip] = time.time() + 10 * 60
@@ -637,7 +639,8 @@ class Mempool:
                                 mempool_result.append(
                                     "Mempool: Transaction deleted from our mempool"
                                 )
-                            except:  # experimental try and except
+                            except Exception as e:  # experimental try and except
+                                self.app_log.debug("Mempool: Error deleting tx from mempool: {}".format(e))
                                 mempool_result.append(
                                     "Mempool: Transaction was not present in the pool anymore"
                                 )

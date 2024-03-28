@@ -2,7 +2,6 @@
 BismuthConfig class, derived from legacy config.py
 """
 
-import logging
 from os import path
 from pprint import pprint
 from sys import exc_info

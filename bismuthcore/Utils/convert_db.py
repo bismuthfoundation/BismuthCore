@@ -88,11 +88,11 @@ def create(db, sql: tuple):
 if __name__ == "__main__":
     try:
         remove("ledger_new.db")
-    except:
+    except Exception:
         pass
     try:
         remove("ledger_legacy.db")
-    except:
+    except Exception:
         pass
     test_new = sqlite3.connect("ledger_new.db", timeout=1)
     create(test_new, SQL_CREATE)

@@ -18,7 +18,7 @@ from Cryptodome.Hash import SHA
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import PKCS1_v1_5
 from os import path
-from bismuthclient.simplecrypt import *
+from bismuthcore.simplecrypt import decrypt
 
 __version__ = "0.0.21"
 
@@ -191,20 +191,26 @@ def keys_load(privkey="privkey.der", pubkey="pubkey.der"):
         # print ("loaded",privkey, pubkey)
         # import keys
         try:  # unencrypted
-            key = RSA.importKey(open(privkey).read())
+            with open(privkey) as keyfile:
+                key = RSA.importKey(keyfile.read())
             private_key_readable = key.exportKey().decode("utf-8")
             # public_key = key.publickey()
             encrypted = False
             unlocked = True
 
-        except:  # encrypted
+        except Exception:  # encrypted
             encrypted = True
             unlocked = False
             key = None
-            private_key_readable = open(privkey).read()
+            try:
+                with open(privkey) as keyfile:
+                    private_key_readable = keyfile.read()
+            except Exception:
+                raise
 
         # public_key_readable = str(key.publickey().exportKey())
-        public_key_readable = open(pubkey.encode("utf-8")).read()
+            with open(pubkey.encode("utf-8")) as keyfile:
+                public_key_readable = keyfile.read()
 
         if (len(public_key_readable)) != 271 and (len(public_key_readable)) != 799:
             raise ValueError(
@@ -252,7 +258,7 @@ def keys_load_new(keyfile="wallet.der"):
         encrypted = False
         unlocked = True
 
-    except:  # encrypted
+    except Exception:  # encrypted
         encrypted = True
         unlocked = False
         key = None

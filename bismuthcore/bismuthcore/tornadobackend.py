@@ -146,8 +146,8 @@ class TornadoBackend(ComBackend):
         try:
             client.close()
             self.threads -= 1
-        except:
-            pass
+        except Exception as e:
+            self.app_log.warning("Error closing client {}".format(e))
 
 
 class TornadoComServer(TCPServer):
